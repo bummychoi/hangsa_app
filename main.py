@@ -590,10 +590,98 @@ def out_d_bar_lists():
     finally:
         conn.close()
 
+@app.route("/out_edit", methods=["GET"])
+def out_edit():
+    out_no = request.args.get("out_no")
+    if not out_no:
+        return "out_no가 없습니다", 400
+
+    conn = get_conn()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT
+                    o.id,
+                    o.out_no,
+                    o.lot_no,
+                    o.car_no,
+                    o.out_qty,
+                    o.out_date
+                FROM out_d_bar o
+                WHERE o.out_no = %s
+                ORDER BY o.id ASC
+            """, (out_no,))
+            rows = cur.fetchall()
+
+        if not rows:
+            return f"해당 전표(out_no={out_no})가 없습니다", 404
+
+        # ✅ date 넘겨줘야 JS에서 /out_d_bar_lists?date= 로 돌아갈 때 필요
+        date_str = rows[0]["out_date"].strftime("%Y-%m-%d") if rows[0].get("out_date") else ""
+
+        return render_template("out_edit.html", out_no=out_no, rows=rows, date=date_str)
+    finally:
+        conn.close()
 
 
-if __name__ =="__main__":
-    app.run(debug=True,port=8000)
+@app.route("/out_d_bar_lists_Update", methods=["POST"])
+def out_d_bar_lists_Update():
+    data = request.get_json(silent=True) or {}
+    rows = data.get("rows") or []
+    if not rows:
+        return jsonify(result="fail", msg="rows 없음"), 400
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            updated = 0
+            for r in rows:
+                _id = r.get("id")
+                car_no = (r.get("car_no") or "").strip()
+                out_qty = r.get("out_qty")
+
+                if not _id:
+                    continue
+
+                cur.execute("""
+                    UPDATE out_d_bar
+                    SET car_no=%s, out_qty=%s
+                    WHERE id=%s
+                """, (car_no, out_qty, _id))
+                updated += cur.rowcount
+
+        conn.commit()
+        return jsonify(result="ok", updated=updated)
+    except Exception as e:
+        conn.rollback()
+        return jsonify(result="fail", msg=str(e)), 500
+    finally:
+        conn.close()
+
+
+@app.route("/out_delete_by_outno", methods=["POST"])
+def out_delete_by_outno():
+    data = request.get_json(silent=True) or {}
+    out_no = (data.get("out_no") or "").strip()
+    if not out_no:
+        return jsonify(result="fail", msg="out_no 없음"), 400
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM out_d_bar WHERE out_no=%s", (out_no,))
+            deleted = cur.rowcount
+        conn.commit()
+        return jsonify(result="ok", deleted=deleted)
+    except Exception as e:
+        conn.rollback()
+        return jsonify(result="fail", msg=str(e)), 500
+    finally:
+        conn.close()
+
+if __name__ == "__main__":
+    print(app.url_map)
+    app.run(host="127.0.0.1", port=8000, debug=True)
 
 # if __name__ == "__main__":
 #     import webbrowser
