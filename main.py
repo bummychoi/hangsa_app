@@ -493,51 +493,99 @@ def get_conn():
         autocommit=True  # 또는 False로 통일
     )
 
-
-
 @app.route("/out_d_bar_lists")
 def out_d_bar_lists():
     date_str = request.args.get("date") or datetime.now().strftime("%Y-%m-%d")
+    ymd = date_str.replace("-", "")  # 2026-01-09 -> 20260109
 
     start = datetime.strptime(date_str, "%Y-%m-%d")
     end = start + timedelta(days=1)
+
     date_kr = f"{start.year}년 {start.month}월 {start.day}일"
 
     conn = get_conn()
     try:
-        # ✅ DictCursor로 받아야 r["out_date"] 가능
         with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            # ✅ UNION 전체 ORDER BY에서 o.id 같은 테이블별칭 사용 불가 → tid로 뽑아서 정렬
             cur.execute("""
-                SELECT 
-                    o.out_no,
-                    i.owner_name,
-                    i.maker,
-                    i.steel_type,
-                    i.size,
-                    o.car_no,
-                    o.out_qty,
-                    (o.out_qty * i.mt_weight) AS out_wt,
-                    o.out_date
-                FROM out_d_bar o
-                LEFT JOIN in_d_bar i ON i.lot_no = o.lot_no
-                WHERE o.out_date >= %s AND o.out_date < %s
-                ORDER BY o.out_no, o.out_date, o.id
-            """, (start, end))
+                SELECT
+                    grp, out_no, owner_name, maker, steel_type, size,
+                    car_no, out_qty, out_wt, out_date, tid
+                FROM (
+                    -- ✅ A) 미출고(차량번호 4자리 미만) + 선택일자 이하(out_date 기준)
+                    SELECT
+                        'PENDING' AS grp,
+                        o.out_no,
+                        i.owner_name,
+                        i.maker,
+                        i.steel_type,
+                        i.size,
+                        o.car_no,
+                        o.out_qty,
+                        (o.out_qty * i.mt_weight) AS out_wt,
+                        o.out_date,
+                        o.id AS tid
+                    FROM out_d_bar o
+                    LEFT JOIN in_d_bar i ON i.lot_no = o.lot_no
+                    WHERE (
+                        o.car_no IS NULL
+                        OR TRIM(o.car_no) = ''
+                        OR o.car_no = '.'
+                        OR LENGTH(TRIM(o.car_no)) < 4
+                    )
+                    AND o.out_date < %s   -- ✅ 2026-01-09 이하(= 2026-01-10 미만)
+
+                    UNION ALL
+
+                    -- ✅ B) 선택일자 출고내역 전부(out_no 기준, 차량번호 조건 없음)
+                    SELECT
+                        'DAY' AS grp,
+                        o.out_no,
+                        i.owner_name,
+                        i.maker,
+                        i.steel_type,
+                        i.size,
+                        o.car_no,
+                        o.out_qty,
+                        (o.out_qty * i.mt_weight) AS out_wt,
+                        o.out_date,
+                        o.id AS tid
+                    FROM out_d_bar o
+                    LEFT JOIN in_d_bar i ON i.lot_no = o.lot_no
+                    WHERE o.out_no LIKE %s
+                ) t
+                ORDER BY
+                    CASE WHEN grp='PENDING' THEN 0 ELSE 1 END,
+                    out_date DESC, out_no DESC, tid DESC
+            """, (end, ymd + "%"))
+
             raw = cur.fetchall()
 
-        rows = []
+        pending_rows, day_rows = [], []
         for r in raw:
             out_dt = r.get("out_date")
             r["out_qty"] = float(r.get("out_qty") or 0)
             r["out_wt"] = float(r.get("out_wt") or 0)
             r["save_time"] = out_dt.strftime("%H:%M:%S") if out_dt else ""
-            rows.append(r)
+
+            # 화면에는 tid 안 보여도 됨(정렬용)
+            r.pop("tid", None)
+
+            if r.get("grp") == "PENDING":
+                pending_rows.append(r)
+            else:
+                day_rows.append(r)
+
+        # ✅ 기존 템플릿(rows) 호환
+        rows = pending_rows + day_rows
 
         return render_template(
             "out_d_bar_lists.html",
             date_str=date_str,
             date_kr=date_kr,
-            rows=rows
+            rows=rows,
+            pending_rows=pending_rows,
+            day_rows=day_rows
         )
     finally:
         conn.close()
