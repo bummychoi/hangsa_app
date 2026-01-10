@@ -589,52 +589,45 @@ $(document).on("change", "#bulkFile", function () {
     $("#bulkFileName").text(name);
 });
 
-// 일괄등록 버튼 클릭
-$(document).on("click", "#bulkUploadBtn", function () {
-    const fileInput = $("#bulkFile")[0];
+// ✅ 출고 일괄 저장 (textarea 복붙) - 페이지 이동 방지
+$(document).on("submit", "#bulkOutForm", function (e) {
+  e.preventDefault();
 
-    if (!fileInput.files || fileInput.files.length === 0) {
-        alert("업로드할 파일을 선택하세요.");
-        return;
-    }
+  const fd = new FormData(this);
 
-    const file = fileInput.files[0];
-
-    // 확장자 체크 (xlsx만)
-    const name = (file.name || "").toLowerCase();
-    if (!name.endsWith(".xlsx")) {
-        alert("xlsx 파일만 업로드 가능합니다. (.xls 불가)");
-        return;
-    }
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    $.ajax({
-        url: "/in_bulk_upload",
-        type: "POST",
-        data: fd,
-        processData: false,   // FormData 필수
-        contentType: false,   // FormData 필수
-        success: function (res) {
-            if (res.result === "ok") {
-                alert(`일괄등록 완료 (${res.inserted || res.rows || 0}건)`);
-                // 필요하면 리스트 새로고침
-                // location.reload();
-            } else {
-                alert(res.msg || "일괄등록 실패");
-            }
-        },
-        error: function (xhr) {
-            let msg = "일괄등록 실패";
-            try {
-                const r = JSON.parse(xhr.responseText);
-                if (r.msg) msg = r.msg;
-            } catch (e) { }
-            alert(msg);
+  $.ajax({
+    url: "/out_bulk_save",
+    type: "POST",
+    data: fd,
+    processData: false,
+    contentType: false,
+    dataType: "json",
+    success: function (res) {
+      if (res.ok) {
+        alert("저장완료("+res.inserted+"건)");
+        let html = `✅ 저장완료: <b>${res.inserted}</b>건`;
+        if ((res.missing_count || 0) > 0) {
+          html += `<br><span style="color:red">누락(${res.missing_count}): ${res.missing_lots.join(", ")}</span>`;
+        } else {
+          html += `<br>누락 LOT: 0건`;
         }
-    });
+        $("#resultBox").html(html);
+      } else {
+        $("#resultBox").html(`<span style="color:red">${res.msg || "저장 실패"}</span>`);
+      }
+    },
+    error: function (xhr) {
+      let msg = "저장 실패";
+      try {
+        const r = JSON.parse(xhr.responseText);
+        if (r.msg) msg = r.msg;
+      } catch (e) {}
+      $("#resultBox").html(`<span style="color:red">${msg}</span>`);
+    }
+  });
 });
+
+
 
 $(document).on("click", "#lists_btnOut", function () {
     const w = 1200;
