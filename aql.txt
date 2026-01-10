@@ -1,3 +1,6 @@
+-- =========================
+-- 0) DB 리셋
+-- =========================
 DROP DATABASE IF EXISTS hangsa;
 
 CREATE DATABASE hangsa
@@ -6,35 +9,44 @@ CREATE DATABASE hangsa
 
 USE hangsa;
 
+-- =========================
+-- 1) 입고 테이블 (부모)
+-- =========================
 CREATE TABLE in_d_bar (
   lot_no      VARCHAR(30) NOT NULL,
   vessel_name VARCHAR(30) NOT NULL,
   owner_name  VARCHAR(30) NOT NULL,
   cargo_no    VARCHAR(20) NULL,
   bl_no       VARCHAR(20) NOT NULL,
-  maker       VARCHAR(20) NOT NULL,
+  maker       VARCHAR(20) NOT NULL,              -- 제강사(현재는 원산지 값 넣어도 OK)
   cargo_type  VARCHAR(20) NULL,
   steel_type  VARCHAR(20) NULL,
   size        VARCHAR(20) NULL,
   bundle_qty  INT NULL,
-  mt_weight   DECIMAL(10,3) NULL,
+  mt_weight   DECIMAL(10,3) NULL,                -- 총중량(또는 톤)
+  unit_wt     DECIMAL(20,6) NOT NULL DEFAULT 0.000,  -- ✅ 단위중량 (엑셀 단위중량 저장용)
   date_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (lot_no)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
 
+-- =========================
+-- 2) 출고 테이블 (자식)
+-- =========================
 CREATE TABLE out_d_bar (
   id       BIGINT NOT NULL AUTO_INCREMENT,
-  out_no   VARCHAR(30) NOT NULL,
-  lot_no   VARCHAR(30) NOT NULL,
+  out_no   VARCHAR(30) NOT NULL,                 -- 전표번호(외부 프로그램에서 받는 값)
+  lot_no   VARCHAR(30) NOT NULL,                 -- FK: in_d_bar.lot_no
   car_no   VARCHAR(20) NULL,
-  out_qty  DECIMAL(10,3) NOT NULL DEFAULT 0.000,
+  out_qty  INT NOT NULL DEFAULT 0,               -- ✅ 출고수량(보통 묶음/본수라 int 권장)
   out_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+
   KEY idx_out_no (out_no),
   KEY idx_lot_no (lot_no),
   KEY idx_lot_date (lot_no, out_date),
+
   CONSTRAINT fk_out_lot
     FOREIGN KEY (lot_no) REFERENCES in_d_bar(lot_no)
     ON DELETE RESTRICT
@@ -42,3 +54,4 @@ CREATE TABLE out_d_bar (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
+

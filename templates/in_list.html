@@ -16,14 +16,15 @@
       <th>LOT</th>
       <th>선명</th>
       <th>화물관리번호</th>
-      <th>화종</th>
       <th>BL</th>
+      <th>화종</th>
       <th>화주</th>
+      <th>제강사</th>
+      <th>강종</th>
       <th>규격</th>
       <th>수량</th>
       <th>중량</th>
-      <th>제강사</th>
-      <th>강종</th>
+      <th>단중</th>
       <th>일시</th>
     </tr>
   </thead>
@@ -34,16 +35,16 @@
       <td title="{{row.lot_no}}">{{ row.lot_no }}</td>
       <td title="{{row.vessel_name}}">{{ row.vessel_name }}</td>
       <td title="{{ row.cargo_no}}" style="width: auto;">{{row.cargo_no}} </td>
-      <td title="{{ row.cargo_type}}">{{ row.cargo_type}}</td>
       <td title="{{ row.bl_no }}">{{ row.bl_no }}</td>
+      <td title="{{ row.cargo_type}}">{{ row.cargo_type}}</td>
       <td title="{{ row.owner_name }}">{{ row.owner_name }}</td>
-      <td title="{{ row.size }}">{{ row.size }}</td>
-      <td title="{{ row.bundle_qty }}">{{ row.bundle_qty }}</td>
-      <td title="{{ row.mt_weight }}">{{ row.mt_weight }}</td>
       <td title=">{{ row.maker }}">{{ row.maker }}</td>
       <td title="{{ row.steel_type }}">{{ row.steel_type }}</td>
-      <!-- <td title="{{ row.size }}">{{ row.size }}</td> -->
-      <td title="{{ row.date }}">{{ row.date }}</td>
+      <td title="{{ row.size }}">{{ row.size }}</td>
+      <td title="{{ row.bundle_qty }}">{{ row.bundle_qty }}</td>
+      <td title="{{ row.mt_weight }}">{{ row.mt_weight }}</td>   
+      <td title="{{ row.unit_wt }}">{{ "%.3f"|format(row.unit_wt or 0) }}</td>
+      <td title="{{ row.date_at }}">{{ row.date_at }}</td>
     </tr>
     {% endfor %}
   </tbody>

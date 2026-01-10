@@ -675,3 +675,12 @@ $(function(){
 
 
 
+// 차량번호 input에 포커스/입력하면 '미입력' 숨김
+$(document).on("focus input", "input.car_no", function () {
+  $(this).closest("td").find(".car-warning").hide();
+});
+
+// '미입력' 글자 자체를 눌러도 숨김
+$(document).on("click", ".car-warning", function () {
+  $(this).hide();
+});
