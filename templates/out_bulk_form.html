@@ -1,0 +1,42 @@
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>입고 등록</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- ✅ jQuery 먼저 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <!-- ✅ 기존 script.js (필요하면 유지) -->
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=20260108_1"></script>
+</head>
+
+<body>
+    <form id="bulkOutForm" method="POST" action="{{ url_for('out_bulk_save') }}">
+        <div class="bulk-wrap">
+            <div class="bulk-title">일괄출고</div>
+            <div class="bulk-desc">
+                엑셀에서 범위 선택 → <b>복사</b> → 아래 칸에 <b>붙여넣기</b> 하세요.<br>
+                서버에서 필요한 값만 추출해서 출고(out_d_bar)에 저장합니다.
+            </div>
+
+            <div class="bulk-row">
+                <label style="font-weight:800;">작업일자</label>
+
+                <!-- ✅ name 추가 -->
+                <input type="date" id="work_date" name="work_date" value="{{ date or '' }}" required>
+
+                <button type="submit" class="bulk-btn" id="btnParse">저장</button>
+                <button type="button" class="bulk-btn gray" onclick="window.close()">닫기</button>
+            </div>
+
+            <textarea id="bulkText" name="bulk_text" placeholder="여기에 엑셀에서 복사한 내용을 그대로 붙여넣기 (탭/줄바꿈 유지)"
+                required></textarea>
+
+            <div class="bulk-result" id="resultBox"></div>
+        </div>
+    </form>
+
+</body>

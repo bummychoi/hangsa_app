@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="kr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
+
+    <title>철근메인</title>
+
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <span id="today" class="today">2025년 00월 00일</span>
+            <div class="id_pw">
+                <span id="id">20405012</span>
+                <span id="name">최승범</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{url_for('home')}}">수입철근</a>
+                        <ul class="sub">
+                            <li><a href="{{url_for('in_d_bar')}}">입고</a></li>
+                            <li><a href="{{url_for('out_d_bar')}}">출고</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#">수출철근</a>
+                        <ul class="sub">
+                            <li><a href="#">입고</a></li>
+                            <li><a href="#">츨고</a></li>
+                        </ul>
+                    </li>
+                    <!-- <li><a href="#">화주관리</a></li>
+                <li><a href="#">차량관리</a></li> -->
+                </ul>
+            </nav>
+        </header>
+        <div class="contents">
+            {% block contents %}
+            {% endblock %}
+        </div>
+        <footer>
+            <div class="flogo">
+                <h2><img src='https://dbworks.dongbang.co.kr/upload/img/logo/eDongbang/1000/IMG_COMP_LOGO_1000.png'
+                        alt="logo"></h2>
+            </div>
+            <div class="copy">
+                Copyright &copy; DOUZONE BIZON. All rights reserved
+            </div>
+            <div class="sns">
+                sns
+            </div>
+        </footer>
+    </div>
+
+</body>
+
+</html>

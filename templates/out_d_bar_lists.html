@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
+
+    <title>출고조회</title>
+</head>
+
+<body>
+    <div class="out_list_nav">
+        <div class="out_list_title">
+            출고조회 리스트 : <span class="out_list_title_date">{{ date_kr }}</span>
+        </div>
+
+        <div class="out_list_controls">
+            <input class="out_list_date" id="datePicker" type="date" value="{{ date_str }}">
+
+            <ul>
+                <li><button type="button" class="out_btns goday" onclick="goDate()">조회</button></li>
+                <li><button type="button" class="out_btns gray" onclick="window.close()">닫기</button></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="lists_contents">
+        <table class="out_list_table">
+            <thead>
+                <tr>
+                    <th class="col-outno">출고번호</th>
+                    <th class="col-owner">화주명</th>
+                    <th>제강사</th>
+                    <th>강종</th>
+                    <th>사이즈</th>
+                    <th>차량번호</th>
+                    <th>출고수량</th>
+                    <th>출고중량</th>
+                    <th>저장시간</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% if rows %}
+                {% for r in rows %}
+                <tr class="out-row" data-outno="{{ r.out_no }}">
+                    <td class="col-outno mono">{{ r.out_no }}</td>
+                    <td class="col-owner">{{ r.owner_name }}</td>
+                    <td>{{ r.maker }}</td>
+                    <td>{{ r.steel_type }}</td>
+                    <td>{{ r.size }}</td>
+                    <td class="mono">{{ r.car_no or "" }}</td>
+                    <td class="num">{{ "%.1f"|format(r.out_qty) }}</td>
+                    <td class="num">{{ "%.3f"|format(r.out_wt or 0) }}</td>
+                    <td class="mono">{{ r.save_time }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="9" style="padding:30px;">출고 내역이 없습니다.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

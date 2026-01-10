@@ -1,0 +1,109 @@
+{% extends "main.html" %}
+
+{% block contents %}
+<nav class="in_btn">
+  <ul>
+    <li><a href="{{url_for('in_list')}}">조회</a></li>
+    <li>
+      <a href="#" onclick="openInPopup(); return false;">입고</a>
+    </li>
+  </ul>
+</nav>
+<table border="1">
+  <thead>
+    <tr>
+      <th>순번</th>
+      <th>LOT</th>
+      <th>선명</th>
+      <th>화물관리번호</th>
+      <th>화종</th>
+      <th>BL</th>
+      <th>화주</th>
+      <th>규격</th>
+      <th>수량</th>
+      <th>중량</th>
+      <th>제강사</th>
+      <th>강종</th>
+      <th>일시</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr id="{{row.lot_no}}" dat_lot="{{row.lot_no}}">
+      <td title="{{loop.index}}">{{loop.index}}</td>
+      <td title="{{row.lot_no}}">{{ row.lot_no }}</td>
+      <td title="{{row.vessel_name}}">{{ row.vessel_name }}</td>
+      <td title="{{ row.cargo_no}}" style="width: auto;">{{row.cargo_no}} </td>
+      <td title="{{ row.cargo_type}}">{{ row.cargo_type}}</td>
+      <td title="{{ row.bl_no }}">{{ row.bl_no }}</td>
+      <td title="{{ row.owner_name }}">{{ row.owner_name }}</td>
+      <td title="{{ row.size }}">{{ row.size }}</td>
+      <td title="{{ row.bundle_qty }}">{{ row.bundle_qty }}</td>
+      <td title="{{ row.mt_weight }}">{{ row.mt_weight }}</td>
+      <td title=">{{ row.maker }}">{{ row.maker }}</td>
+      <td title="{{ row.steel_type }}">{{ row.steel_type }}</td>
+      <!-- <td title="{{ row.size }}">{{ row.size }}</td> -->
+      <td title="{{ row.date }}">{{ row.date }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div id="lotModal" class="modal_bg">
+  <div class="modal_box">
+    <div class="btns button">
+      <form name="in_list" method="POST" action="{{url_for('in_form')}}">
+        <table class="input_tb">
+          <tr>
+            <td>LOT-NO</td>
+            <td><input type="text" name="f_lot_no" id="f_lot_no"></td>
+          </tr>
+          <tr>
+            <td>선명</td>
+            <td><input type="text" name="f_vessel_name" id="f_vessel_name"></td>
+          </tr>
+          <tr>
+            <td>화주명</td>
+            <td><input type="text" name="f_owner_name" id="f_owner_name"></td>
+          </tr>
+          <tr>
+            <td>화물관리번호</td>
+            <td><input type="text" name="f_cargo_no" id="f_cargo_no"></td>
+          </tr>
+          <tr>
+            <td>화종</td>
+            <td><input type="text" name="f_cargo_type" id="f_cargo_type"></td>
+          </tr>
+          <tr>
+            <td>B/L NO.</td>
+            <td><input type="text" name="f_bl_no" id="f_bl_no"></td>
+          </tr>
+          <tr>
+            <td>제강사</td>
+            <td><input type="text" name="f_maker" id="f_maker"></td>
+          </tr>
+          <tr>
+            <td>강종</td>
+            <td><input type="text" name="f_steel_type" id="f_steel_type"></td>
+          </tr>
+          <tr>
+            <td>싸이즈</td>
+            <td><input type="text" name="f_size" id="f_size"></td>
+          </tr>
+          <tr>
+            <td>B/D</td>
+            <td><input type="number" name="f_bundle_qty" id="f_bundle_qty"></td>
+          </tr>
+          <tr>
+            <td>M/T</td>
+            <td><input type="number" step="0.001" name="f_mt_weight" id="f_mt_weight"></td>
+          </tr>
+        </table>
+        <button type="button" class="btnEdit" id="btnUpdate">수정</button>
+        <button type="button" class="btnDelete" id="btnDelete">삭제</button>
+        <button type="button" class="btnCancel" id="btnCancel">취소</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

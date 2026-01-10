@@ -1,0 +1,80 @@
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
+</head>
+<div class="form_wrap">
+    <nav class="input_form">
+        <h2>출고</h2>
+        <div class="bulk-bar">
+            <div class="bulk-item">
+                <span>출고번호</span>
+                <input type="text" id="bulk_out_no" placeholder="예: 20251231001">
+            </div>
+
+            <div class="bulk-item">
+                <span>차량번호</span>
+                <input type="text" id="bulk_car_no" placeholder="예: 12가 3456">
+            </div>
+
+            <button type="button" onclick="apply_bulk()" class="go">전체적용</button>
+        </div>
+        <ul class="input_sub">
+            <!-- <li><a href="#">주가</a></li> -->
+            <li><a type="button" onclick="all_save_out(this)">저장</a></li>
+            <li><a href="#" onclick="cancel_out(); return false;">취소</a></li>
+
+        </ul>
+    </nav>
+
+    {% if msg %}<p style="color:red">{{ msg }}</p>{% endif %}
+    <div class="out-wrap">
+        <table border="1" class="out-table">
+            <thead>
+                <tr>
+                    <th>LOT_NO</th>
+                    <th>화주명</th>
+                    <th>강종</th>
+                    <th>사이즈</th>
+                    <th>제강사</th>
+                    <th>출고번호</th>
+                    <th>차량번호</th>
+                    <th style="width:180px;">출고수량</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.lot_no }}</td>
+                    <td>{{ row.owner_name }}</td>
+                    <td>{{ row.steel_type }}</td>
+                    <td>{{ row.size }}</td>
+                    <td>{{ row.maker }}</td>
+                    <td class="col-input">
+                        <div class="out-qty-wrap">
+                            <input type="text" name="out_no" placeholder="예: 20251231001" required>
+                        </div>
+                    </td>
+                    <td class="col-input">
+                        <div class="out-qty-wrap">
+                            <input type="hidden" name="lot_no" value="{{row.lot_no}}">
+                            <input type="text" name="car_no" placeholder="예: 12가 3456" required>
+                        </div>
+                    </td>
+
+                    <td class="col-input">
+                        <div class="out-qty-wrap">
+                            <input type="number" name="out_qty" id="out_qty" min="1" step="1" value="1" required>
+                            <span class="unit">D/B</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>

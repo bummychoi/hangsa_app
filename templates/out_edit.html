@@ -1,0 +1,55 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
+
+<body>
+    <div class="popup-wrap">
+        <h2 class="popup-wrap" style="color: blue;">출고수정</h2>
+        <div class="popup-actions">
+            <button type="button" class="save" id="out_btnUpdate">수정</button>
+            <button type="button" class="btnDelete" id="out_btnDelete">삭제</button>
+            <button type="button" class="close" onclick="window.close()">닫기</button>
+        </div>
+        <div style="margin:20px 0; font-size:22px; font-weight:700;">
+            출고번호: <span id="out_no">{{ out_no }}</span>
+        </div>
+
+        <table class="out-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>LOT</th>
+                    <th>차량번호</th>
+                    <th>출고수량</th>
+                    <th>시간</th>
+                </tr>
+            </thead>
+            <input type="hidden" id="work_date" value="{{ date }}">
+            <input type="hidden" id="out_no" value="{{ out_no }}">
+            {% if rows %}
+            <tbody>
+                {% for r in rows %}
+                <tr data-id="{{ r[0] }}">
+                    <td>{{ r[0] }}</td>
+                    <td class="mono">{{ r[2] }}</td>
+                    <td><input type="text" class="car_no" value="{{ r[3] or ''}}">
+                        {% if not r[3] or r[3]|trim|length < 4 %} <div class="car-warning">미입력
+    </div>
+    {% endif %}
+    </td>
+    <td><input type="number" style="font-size: 22px;" step="0.1" class="out_qty" value="{{ r[4] }}"></td>
+    <td class="mono">{{ r[5].strftime("%H:%M:%S") }}</td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan="5" style="padding:30px;">내역 없음</td>
+    </tr>
+    {% endif %}
+    </tbody>
+    </table>
+    </div>
+    </div>
+</body>

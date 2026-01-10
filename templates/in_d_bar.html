@@ -1,0 +1,65 @@
+{% extends "main.html" %}
+
+{% block contents %}
+<nav class="in_btn">
+    <ul>
+        <li><a href="{{url_for('in_list')}}">조회</a></li>
+        <li><a href="#" onclick="in_btn2(); return false";>입고</a></li>
+    </ul>
+</nav>
+<div id="inModal" class="modal_bg">
+    <div class="modal_box">
+        <form name="in_list" method="POST" action="{{url_for('in_form')}}">
+            <table class="input_tb">
+                <tr>
+                    <th>LOT-NO</th>
+                    <td><input type="text" id="f_lot_no" name="lot_no" required></td>
+                </tr>
+                <tr>
+                    <th>선명</th>
+                    <td><input type="text" id="f_vessel_name" name="vessel_name"></td>
+                </tr>
+                <tr>
+                    <th>화주명</th>
+                    <td><input type="text" id="f_owner_name" name="owner_name"></td>
+                </tr>
+                <tr>
+                    <th>화물관리번호</th>
+                    <td><input type="text" id="f_cargo_no" name="cargo_no"></td>
+                </tr>
+                <tr>
+                    <th>화종</th>
+                    <td><input type="text" id="f_cargo_type" name="cargo_type"></td>
+                </tr>
+                <tr>
+                    <th>B/L NO</th>
+                    <td><input type="text" id="f_bl_no" name="bl_no"></td>
+                </tr>
+                <tr>
+                    <th>제강사</th>
+                    <td><input type="text" id="f_maker" name="maker"></td>
+                </tr>
+                <tr>
+                    <th>강종</th>
+                    <td><input type="text" id="f_steel_type" name="steel_type"></td>
+                </tr>
+                <tr>
+                    <th>싸이즈</th>
+                    <td><input type="text" id="f_size" name="size"></td>
+                </tr>
+                <tr>
+                    <th>B/D</th>
+                    <td><input type="number" id="f_bundle_qty" name="bundle_qty"></td>
+                </tr>
+                <tr>
+                    <th>M/T</th>
+                    <td><input type="number" step="0.001" id="f_mt_weight" name="mt_weight"></td>
+                </tr>
+            </table>
+            <button type="submit" class="in_save">저장</button>
+            <button type="button" class="modal_close" onclick="close_in_btn()">닫기</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

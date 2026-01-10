@@ -1,0 +1,44 @@
+DROP DATABASE IF EXISTS hangsa;
+
+CREATE DATABASE hangsa
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_0900_ai_ci;
+
+USE hangsa;
+
+CREATE TABLE in_d_bar (
+  lot_no      VARCHAR(30) NOT NULL,
+  vessel_name VARCHAR(30) NOT NULL,
+  owner_name  VARCHAR(30) NOT NULL,
+  cargo_no    VARCHAR(20) NULL,
+  bl_no       VARCHAR(20) NOT NULL,
+  maker       VARCHAR(20) NOT NULL,
+  cargo_type  VARCHAR(20) NULL,
+  steel_type  VARCHAR(20) NULL,
+  size        VARCHAR(20) NULL,
+  bundle_qty  INT NULL,
+  mt_weight   DECIMAL(10,3) NULL,
+  date_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (lot_no)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE out_d_bar (
+  id       BIGINT NOT NULL AUTO_INCREMENT,
+  out_no   VARCHAR(30) NOT NULL,
+  lot_no   VARCHAR(30) NOT NULL,
+  car_no   VARCHAR(20) NULL,
+  out_qty  DECIMAL(10,3) NOT NULL DEFAULT 0.000,
+  out_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_out_no (out_no),
+  KEY idx_lot_no (lot_no),
+  KEY idx_lot_date (lot_no, out_date),
+  CONSTRAINT fk_out_lot
+    FOREIGN KEY (lot_no) REFERENCES in_d_bar(lot_no)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;

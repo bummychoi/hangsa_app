@@ -1,0 +1,1211 @@
+@charset "utf-8";
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* Layout */
+.wrap {
+  width: 1800px;
+  height: 1050px;
+  margin: auto;
+}
+
+header {
+  width: 100%;
+  height: 100px;
+  background: rgb(8, 150, 238);
+  display: flex;
+  justify-content: space-between;
+}
+
+.contents {
+  width: 100%;
+  height: calc(100% - 100px - 150px);
+  background: rgb(174, 242, 237);
+  overflow: auto;
+}
+
+/* Header pieces */
+.today {
+  width: 350px;
+  height: 100px;
+  background: rgb(114, 166, 209);
+  padding: 20px;
+  font-size: 25px;
+  text-align: center;
+  color: #fff;
+  font-weight: bold;
+}
+
+.id_pw {
+  width: 200px;
+  padding-top: 20px;
+  text-align: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+header nav {
+  margin-right: 80px;
+  margin-left: auto;
+  z-index: 99999;
+}
+
+/* Nav */
+nav>ul {
+  display: flex;
+}
+
+nav>ul>li>a {
+  display: block;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  font-size: 35px;
+  border: 1px solid #fff;
+}
+
+nav>ul>li:hover>a {
+  background: #fff;
+  color: rgb(8, 150, 238);
+}
+
+.sub {
+  width: 170px;
+  background: rgb(19, 174, 235);
+  text-align: center;
+  display: none;
+  z-index: 9999999;
+}
+
+.sub li {
+  padding: 10px 0;
+  border-bottom: dashed 1px red;
+}
+
+.sub li>a {
+  color: #fff;
+  font-size: 25px;
+}
+
+.sub li>a:hover {
+  background: red;
+  padding: 8px 50px;
+  border-radius: 15px;
+}
+
+/* Fixed top buttons (조회/입고) */
+.in_btn {
+  position: fixed;
+  top: 3px;
+  right: 600px;
+  z-index: 10;
+  background: yellowgreen;
+}
+
+/* =========================
+   List Table (조회 테이블)
+   ========================= */
+.contents>table {
+  width: 100%;
+  background: #eaffff;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 18px;
+}
+
+.contents>table td,
+.contents>table th {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 34px;
+}
+
+.contents>table tbody tr:nth-child(odd) {
+  background-color: #b9f3f8;
+}
+
+.contents>table tbody tr:nth-child(even) {
+  background-color: #f1f8f8;
+}
+
+/* Hover tooltip cell (선택적으로 사용) */
+.hover-cell {
+  position: relative;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.hover-cell .hover-box {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #222;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+
+.hover-cell:hover .hover-box {
+  display: block;
+}
+
+/* =========================
+   Footer
+   ========================= */
+footer {
+  height: 100px;
+  display: flex;
+  text-align: center;
+  align-content: center;
+}
+
+footer>.flogo {
+  width: 200px;
+  background: rgb(29, 14, 169);
+  text-align: center;
+  align-content: center;
+}
+
+footer>.sns {
+  width: 550px;
+  background: palegreen;
+  text-align: center;
+  align-content: center;
+}
+
+footer>.copy {
+  flex: 1;
+  background: skyblue;
+  text-align: center;
+  align-content: center;
+}
+
+/* =========================
+   Modal (공통)
+   ========================= */
+.modal_bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  display: none;
+  z-index: 99999;
+}
+
+/* 모달 창 */
+.modal_box {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  max-width: 95vw;
+  height: 900px;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 40px;
+  overflow: auto;
+  z-index: 200000;
+}
+
+/* 모달 우선순위 */
+#lotModal {
+  z-index: 10000;
+}
+
+#inModal {
+  z-index: 20000;
+}
+
+/* Buttons in modal (상단 우측) */
+.in_save,
+.modal_close {
+  position: absolute;
+  top: 20px;
+  padding: 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 20px;
+  font-size: 30px;
+  z-index: 300000;
+}
+
+.in_save {
+  right: 140px;
+  background: rgb(2, 102, 2);
+  color: #fff;
+}
+
+.in_save:hover {
+  background: rgb(226, 237, 9);
+  color: rgb(2, 102, 2);
+}
+
+.modal_close {
+  right: 30px;
+  background: blue;
+  color: #fff;
+}
+
+.modal_close:hover {
+  background: red;
+}
+
+/* =========================
+   Input Form Table (모달 입력폼)
+   ========================= */
+.input_tb {
+  width: 90%;
+  margin: 120px auto 40px;
+  /* 상단 버튼 공간 확보 */
+  border-collapse: separate;
+  border-spacing: 0 12px;
+}
+
+.input_tb th {
+  width: 200px;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 28px;
+}
+
+.input_tb td {
+  text-align: left;
+  font-size: 28px;
+  white-space: normal;
+  /* 리스트용 ellipsis 영향 차단 */
+  overflow: visible;
+}
+
+.input_tb input {
+  width: 100%;
+  height: 52px;
+  padding: 6px 10px;
+  font-size: 28px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.input_tb input:focus {
+  outline: none;
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.15);
+}
+
+/* Modal edit/delete/cancel buttons (lotModal용) */
+.btns button {
+  font-size: 20px;
+  margin: 25px;
+  padding: 6px 14px;
+  border: none;
+}
+
+.btnEdit {
+  background: rgb(51, 8, 224);
+  color: #fff;
+}
+
+.btnDelete {
+  background: rgb(248, 11, 11);
+  color: #fff;
+}
+
+.btnCancel {
+  background: rgb(222, 238, 6);
+  color: rgb(40, 23, 193);
+}
+
+.out_btn {
+  position: fixed;
+  top: 3px;
+  left: 850px;
+  border: pink 1px solid;
+}
+
+
+.out_btn>li>a:hover {
+  background: pink;
+}
+
+.out-wrap {
+  overflow: hidden;
+  /* ✅ 여기로 이동 */
+  border-radius: 6px;
+  /* ✅ 여기로 이동 */
+
+}
+
+/* 제목 */
+.page-title {
+  margin: 20px 30px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #222;
+  border-left: 6px solid #1e88e5;
+  padding-left: 12px;
+}
+
+/* 테이블 */
+.out-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  /* overflow: hidden; */
+}
+
+/* 출고입력 */
+/* 헤더 */
+.out-table thead {
+  background: #1e88e5;
+  color: #fff;
+}
+.out-table  input{
+  border: none;
+  background: transparent;
+}
+.out-table th {
+  padding: 12px;
+  font-size: 25px;
+  text-align: center;
+}
+
+/* 바디 */
+.out-table td {
+  padding: 11px;
+  text-align: center;
+  font-size: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* 줄무늬 */
+.out-table tbody tr:nth-child(even) {
+  background: #f7f9fc;
+}
+
+/* hover 효과 */
+.out-table tbody tr:hover {
+  background: #e3f2fd;
+}
+
+.out-table input {
+  width: 160px;
+  /* ← 가로 */
+  height: 40px;
+  /* ← 세로 */
+  font-size: 16px;
+  /* 글자 크기 */
+  padding: 6px 10px;
+  /* 안쪽 여백 */
+  box-sizing: border-box;
+}
+
+/* 출고번호 */
+.out-no {
+  width: 100px;
+  /* ← 충분히 넓게 */
+  text-align: center;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+/* 차량번호 */
+.car-no {
+  width: 120px;
+  text-align: center;
+}
+
+/* 출고수량 */
+.out-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.out-qty {
+  width: 100px;
+  text-align: right;
+}
+
+.unit {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* .out-table input[type="number"] {
+  width: 70%;
+  height: 60px;
+  font-size: 20px;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  background: #fff;
+} */
+
+/* 출고수량 한 줄 정렬 */
+.out-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* input 과 D/B 간격 */
+  justify-content: center;
+}
+
+/* input 크기 조절 */
+.out-qty-wrap input {
+  width: 120px;
+  height: 44px;
+  font-size: 18px;
+  padding: 6px 10px;
+  border: 2px solid #111;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* 단위 */
+.out-qty-wrap .unit {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.form_wrap {
+  width: 100%;
+  /* height: 100%; */
+  background: rgb(231, 239, 214);
+}
+
+.input_form {
+  width: 100%;
+  height: 100px;
+  background: #1e88e5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 좌-우 정렬 핵심 */
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.out-wrap button {
+  border: none;
+  background: transparent;
+  font-size: 25px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.out-wrap button:hover {
+  color: red;
+
+}
+
+.stock-minus {
+  color: rgb(241, 240, 244);
+  font-weight: bold;
+  background: #e10505;
+}
+
+.out-table input[type="checkbox"] {
+  width: 25px;
+  height: 25px;
+  /* 같이 주는 게 좋음 */
+}
+
+.out-table th:first-child,
+.out-table td:first-child {
+  width: 80px;
+}
+
+.btn-out {
+  padding: 6px 16px;
+  font-size: 18px;
+  border-radius: 6px;
+  border: none;
+  background: #1e88e5;
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.btn-out:hover {
+  background: #6b06d6;
+}
+
+.bulk-bar {
+  display: flex;
+}
+
+.bulk-bar>* {
+  font-size: 30px;
+  color: white;
+}
+
+.bulk-bar input {
+  width: 200px;
+  height: 50px;
+  font-size: 20px;
+}
+
+header h2,
+.bulk-bar h2 {
+  color: white;
+  font-size: 40px;
+}
+
+.go {
+  padding: 10px;
+  background: rgb(57, 45, 221);
+  border: none;
+  margin-left: 30px;
+  color: rgb(149, 149, 240);
+  border-radius: 20px;
+}
+
+.go:hover {
+  background: palevioletred;
+  color: white;
+}
+
+/* ✅ out_btn 자체 테두리/배경/패딩 강제 제거 */
+ul.out_btn {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 100;
+}
+
+/* ✅ li도 혹시 잡혀있으면 제거 */
+ul.out_btn>li {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* ✅ 버튼(링크/버튼) 스타일 */
+ul.out_btn .btn-out {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+
+  min-width: 140px;
+  height: 56px;
+  padding: 0 24px;
+  font-size: 22px;
+  font-weight: 700;
+  border-radius: 12px;
+  background: #d6dee6;
+  color: #4e0fe3;
+  cursor: pointer;
+  text-decoration: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* hover */
+ul.out_btn .btn-out:hover {
+  background: #6b06d6;
+  color: white;
+}
+
+
+.popup-wrap {
+  margin-top: 0 !important;
+  max-width: 1100px;
+  margin: 10px auto 30px auto;
+  /* 🔥 여기 */
+  padding: 10px 40px;
+  background: #fff;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+.popup-actions {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 100;
+}
+
+.popup-actions button {
+  border: none;
+  font-size: 18px;
+  padding: 14px 26px;
+  border-radius: 18px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.popup-actions .save {
+  background: #0a7f00;
+  color: #fff;
+}
+
+.popup-actions .close {
+  background: #003bff;
+  color: #fff;
+}
+
+/* 상단 네비 */
+.out_list_nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  width: 100%;
+}
+
+.out_list_title {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  white-space: nowrap;
+}
+
+.out_list_title_date {
+  color: #0b57ff;
+  font-weight: 900;
+}
+
+.out_list_controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.out_list_date {
+  width: 220px;
+  height: 46px;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 1px solid #cfd6e4;
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  outline: none;
+}
+
+/* ✅ 버튼은 out_btn 쓰지 말고 전용으로 */
+.out_list_btn {
+  height: 46px;
+  min-width: 92px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 46px;
+}
+
+.out_list_btn.search {
+  background: #094bcf;
+}
+
+.out_list_btn.close {
+  background: #6b7280;
+}
+
+.out_list_btn:hover {
+  filter: brightness(0.95);
+}
+
+/* 본문 영역 */
+.out_list_body {
+  padding: 16px 20px;
+}
+
+/* 표(일단 틀만) */
+.out_list_table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #fff;
+}
+
+.out_list_table th,
+.out_list_table td {
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  text-align: center;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.out_list_table thead th {
+  background: #0b57ff;
+  color: #fff;
+  font-weight: 800;
+}
+
+.out_btns {
+  width: 100px;
+  height: 50px;
+  font-size: 20px;
+  cursor: pointer;
+  border: none;
+}
+
+.out_btns.goday {
+  background: blue;
+  color: white;
+}
+
+.out_btns.gray {
+  background: grey;
+  color: white;
+}
+
+.out_btns:hover {
+  background: yellow;
+  color: red;
+}
+
+/* 본문 영역 */
+.out_list_body {
+  padding: 16px 20px;
+}
+
+.lists_contents {
+  padding: 10px 14px;
+}
+
+/* === 팝업 상단바 === */
+.out_list_nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.out_list_title {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.out_list_title_date {
+  color: #0b57ff;
+  font-weight: 900;
+}
+
+.out_list_controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.out_list_date {
+  width: 220px;
+  height: 46px;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 1px solid #cfd6e4;
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+}
+
+.out_list_controls ul {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.out_btns {
+  width: 100px;
+  height: 46px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+}
+
+.out_btns.goday {
+  background: #094bcf;
+}
+
+.out_btns.gray {
+  background: #6b7280;
+}
+
+.out_btns:hover {
+  filter: brightness(0.95);
+}
+
+/* === 테이블 === */
+.lists_contents {
+  padding: 10px 14px;
+}
+
+.out_list_table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #fff;
+}
+
+.out_list_table thead th {
+  background: rgb(8, 150, 238);
+  color: #fff;
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.out_list_table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e6e8ee;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.out_list_table tbody tr:nth-child(even) {
+  background: #f6f9ff;
+}
+
+.out_list_table tbody tr:hover {
+  background: #e8f2ff;
+  cursor: pointer;
+}
+
+/* ✅ 컬럼 폭(가독성) */
+.col-outno {
+  width: 160px;
+  text-align: left;
+  padding-left: 16px;
+}
+
+.col-owner {
+  width: 220px;
+  white-space: normal;
+  /* 줄바꿈 허용 */
+  word-break: keep-all;
+  line-height: 1.35;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.num {
+  text-align: right;
+  padding-right: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === out_no 그룹 표시(묶음 느낌) === */
+.out_list_table tbody tr.group-start td {
+  border-top: 3px solid rgba(8, 150, 238, .9);
+}
+
+.out_list_table tbody tr.g-even {
+  background: #f3f7ff;
+}
+
+.out_list_table tbody tr.g-odd {
+  background: #ffffff;
+}
+
+.car-warning {
+    color: red;
+    font-size: 22px;      /* 크게 */
+    font-weight: bold;
+    padding-bottom: 4px;
+    text-align: center;
+}
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* 제목 */
+.popup-title {
+  color: #0b57ff;
+  font-size: 36px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* 우측 업로드 영역 */
+.bulk-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 파일 선택 */
+.bulk-upload input[type="file"] {
+  font-size: 14px;
+}
+
+/* 일괄등록 버튼 */
+.bulk-btn {
+  padding: 10px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #0b57ff;
+  color: #fff;
+}
+
+.bulk-btn:hover {
+  background: #083fa3;
+}
+
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+}
+
+/* 좌측: 엑셀 업로드 */
+.left-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 우측: 저장 / 닫기 */
+.right-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 일괄등록 버튼 */
+.bulk-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #0b57ff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bulk-btn:hover {
+  background: #083fa3;
+}
+
+/* 기존 버튼 크기 통일 */
+.popup-header button {
+  font-size: 16px;
+  padding: 12px 20px;
+}
+
+
+.bulk-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 파일 선택 input */
+.bulk-upload input[type="file"] {
+  font-size: 16px;
+  padding: 15px;
+}
+
+/* 상단 헤더 한 줄 정렬 */
+.popup-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom: 12px;
+}
+
+/* 왼쪽 영역 */
+.left-area{
+  display:flex;
+  align-items:center;
+}
+
+/* 업로드 UI 한 줄 */
+.bulk-upload{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* ✅ 진짜 file input은 숨김 */
+.file-hidden{
+  display:none !important;
+}
+
+/* 파일 선택 버튼(label) */
+.file-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:46px;
+  padding:0 18px;
+  border-radius:12px;
+  background:#6b7280;
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+.file-btn:hover{ filter:brightness(.95); }
+
+/* 파일명 */
+.file-name{
+  display:inline-block;
+  min-width:240px;
+  font-size:16px;
+  font-weight:700;
+  color:#111;
+}
+
+/* 일괄등록 버튼 */
+.bulk-btn{
+  height:46px;
+  padding:0 16px;
+  border:0;
+  border-radius:12px;
+  background:#094bcf;
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+}
+.bulk-btn:hover{ filter:brightness(.95); }
+.bulk-wrap{
+      max-width: 1100px;
+      margin: 20px auto;
+      background:#fff;
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-sizing: border-box;
+    }
+    .bulk-title{
+      font-size: 34px;
+      font-weight: 900;
+      color:#0b57ff;
+      margin-bottom: 12px;
+    }
+    .bulk-desc{
+      font-size: 16px;
+      color:#444;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .bulk-row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin: 10px 0 14px;
+    }
+    .bulk-row input{
+      height: 44px;
+      font-size: 16px;
+      padding: 0 10px;
+      border:2px solid #0455f7;
+      border-radius: 10px;
+      width: 220px;
+    }
+    .bulk-btn{
+      height: 44px;
+      padding: 0 16px;
+      border:0;
+      border-radius: 10px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 16px;
+      color:#fff;
+      background:#094bcf;
+    }
+    .bulk-btn.gray{
+      background:#6b7280;
+    }
+    textarea{
+      width:100%;
+      height: 360px;
+      resize: vertical;
+      border:2px solid #0555f5;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.35;
+      box-sizing: border-box;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: pre;
+    }
+    .bulk-result{
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      color:#111;
+    }

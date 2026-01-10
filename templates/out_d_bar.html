@@ -1,0 +1,54 @@
+{% extends "main.html" %}
+
+{% block contents %}
+
+<ul class="out_btn">
+    <li>
+        <button type="button" class="btn-out" data-url="{{ url_for('out_d_bar_lists') }}" onclick="openCenteredPopup(this.dataset.url)">
+            출고조회
+        </button>
+    </li>
+    <li>
+        <button type="button" id="lists_btnOut" class="btn-out">일괄출고</button>
+    </li>
+    <li>
+        <button type="button" id="btnOut" class="btn-out">선택출고</button>
+    </li>
+</ul>
+
+<table class="out-table" border="1">
+    <thead>
+        <tr>
+            <th>체크</th>
+            <th>LOT_NO</th>
+            <th>화주명</th>
+            <th>강종</th>
+            <th>사이즈</th>
+            <th>제강사</th>
+            <th>입고수량</th>
+            <th>출고합계</th>
+            <th>재고</th>
+            <th>최종출고일</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td><input type="checkbox" class="chk-lot" data-lot="{{ r.lot_no }}"></td>
+            <td>{{ r.lot_no }}</td>
+            <td>{{ r.owner_name }}</td>
+            <td>{{ r.steel_type }}</td>
+            <td>{{ r.size }}</td>
+            <td>{{ r.maker }}</td>
+            <td>{{ r.in_qty }}</td>
+            <td>{{ r.out_sum }}</td>
+            <td class="{% if r.stock_qty < 0.5 %}stock-minus{% endif %}">
+                {{ r.stock_qty }}
+            </td>
+            <td style="font-size: 15px;">{{ r.last_out_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
