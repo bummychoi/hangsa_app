@@ -1,0 +1,41 @@
+[33mcommit ed5dd246582ade2d6fa9d7de55dce21e64cefd39[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 20:58:57 2026 +0900
+
+    feat: 일괄출고 기능 완성 및 재고/출고 집계 반영
+
+[33mcommit 0d2e872b3c2a6c86d0147cefc45f4b4f1350d3e0[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 19:12:30 2026 +0900
+
+    feat: 입출고 단중 기준 정리 및 출고중량 계산 수정
+
+[33mcommit 295dc70dc8baad3ddc890b260d8fb5ff875a0896[m[33m ([m[1;33mtag: [m[1;33msafe-2026-01-11[m[33m)[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 16:21:23 2026 +0900
+
+    fix: out_edit 화면/수정삭제 복구
+
+[33mcommit e0577f1f0e951179315a878d1001e4d9f463f0bc[m[33m ([m[1;33mtag: [m[1;33msafe-2026-01-10[m[33m)[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 13:54:39 2026 +0900
+
+    fix:출고조회 날짜 기준 및 미출고 로직 정리
+
+[33mcommit 9f005669adb2fdcc550f18dbd1ffd2bc5b6fd750[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 12:35:45 2026 +0900
+
+    Ignore large MSI installer
+
+[33mcommit 8a833412c032beda0deeade4e2b5be35c6ea389b[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 12:21:38 2026 +0900
+
+    main 파일 추가
+
+[33mcommit 441be06410b5d0c07dbff6a8768e3df871b04bb7[m
+Author: 승범 <bumychoi0@gmail.com>
+Date:   Sat Jan 10 11:52:20 2026 +0900
+
+    초기 출고·입고 관리 웹앱 구조 저장

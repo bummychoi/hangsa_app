@@ -591,40 +591,40 @@ $(document).on("change", "#bulkFile", function () {
 
 // ✅ 출고 일괄 저장 (textarea 복붙) - 페이지 이동 방지
 $(document).on("submit", "#bulkOutForm", function (e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const fd = new FormData(this);
+    const fd = new FormData(this);
 
-  $.ajax({
-    url: "/out_bulk_save",
-    type: "POST",
-    data: fd,
-    processData: false,
-    contentType: false,
-    dataType: "json",
-    success: function (res) {
-      if (res.ok) {
-        alert("저장완료("+res.inserted+"건)");
-        let html = `✅ 저장완료: <b>${res.inserted}</b>건`;
-        if ((res.missing_count || 0) > 0) {
-          html += `<br><span style="color:red">누락(${res.missing_count}): ${res.missing_lots.join(", ")}</span>`;
-        } else {
-          html += `<br>누락 LOT: 0건`;
+    $.ajax({
+        url: "/out_bulk_save",
+        type: "POST",
+        data: fd,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        success: function (res) {
+            if (res.ok) {
+                alert("저장완료(" + res.inserted + "건)");
+                let html = `✅ 저장완료: <b>${res.inserted}</b>건`;
+                if ((res.missing_count || 0) > 0) {
+                    html += `<br><span style="color:red">누락(${res.missing_count}): ${res.missing_lots.join(", ")}</span>`;
+                } else {
+                    html += `<br>누락 LOT: 0건`;
+                }
+                $("#resultBox").html(html);
+            } else {
+                $("#resultBox").html(`<span style="color:red">${res.msg || "저장 실패"}</span>`);
+            }
+        },
+        error: function (xhr) {
+            let msg = "저장 실패";
+            try {
+                const r = JSON.parse(xhr.responseText);
+                if (r.msg) msg = r.msg;
+            } catch (e) { }
+            $("#resultBox").html(`<span style="color:red">${msg}</span>`);
         }
-        $("#resultBox").html(html);
-      } else {
-        $("#resultBox").html(`<span style="color:red">${res.msg || "저장 실패"}</span>`);
-      }
-    },
-    error: function (xhr) {
-      let msg = "저장 실패";
-      try {
-        const r = JSON.parse(xhr.responseText);
-        if (r.msg) msg = r.msg;
-      } catch (e) {}
-      $("#resultBox").html(`<span style="color:red">${msg}</span>`);
-    }
-  });
+    });
 });
 
 
@@ -640,7 +640,7 @@ $(document).on("click", "#lists_btnOut", function () {
     const outerH = window.outerHeight || document.documentElement.clientHeight;
 
     const left = screenX + Math.max(0, (outerW - w) / 2);
-    const top  = screenY + Math.max(0, (outerH - h) / 2);
+    const top = screenY + Math.max(0, (outerH - h) / 2);
 
     const opt = `
         width=${w},
@@ -656,13 +656,13 @@ $(document).on("click", "#lists_btnOut", function () {
 });
 
 
-$(function(){
-    if(!$("#work_date").val()){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      $("#work_date").val(`${y}-${m}-${day}`);
+$(function () {
+    if (!$("#work_date").val()) {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        $("#work_date").val(`${y}-${m}-${day}`);
     }
 })
 
@@ -670,10 +670,42 @@ $(function(){
 
 // 차량번호 input에 포커스/입력하면 '미입력' 숨김
 $(document).on("focus input", "input.car_no", function () {
-  $(this).closest("td").find(".car-warning").hide();
+    $(this).closest("td").find(".car-warning").hide();
 });
 
 // '미입력' 글자 자체를 눌러도 숨김
 $(document).on("click", ".car-warning", function () {
-  $(this).hide();
+    $(this).hide();
+});
+
+
+
+$(document).on("click", "#bulkUploadBtn", function () {
+    const f = $("#bulkFile")[0].files[0];
+    if (!f) return alert("파일 먼저 선택!");
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    $.ajax({
+        url: "/in_bulk_upload",
+        type: "POST",
+        data: fd,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        success: function (res) {
+            if (res.result === "ok") {
+                alert("업로드 완료 (" + res.inserted + "건)");
+                location.reload();
+            } else {
+                alert("실패: " + (res.msg || ""));
+            }
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            alert("서버 오류");
+        }
+    });
+
 });
