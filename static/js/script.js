@@ -709,3 +709,336 @@ $(document).on("click", "#bulkUploadBtn", function () {
     });
 
 });
+console.log("✅ script.js loaded");
+
+// =======================
+// 1) 공통: XSS 방지
+// =======================
+function escapeHtml(s) {
+    return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+// =======================
+// 2) 공통: 숫자 변환(콤마 제거)
+// =======================
+function toNum(v) {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === "number") return v;
+    const s = String(v).trim().replaceAll(",", "");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+}
+
+// =======================
+// 3) 서버 업로드 함수 (팝업에서 호출됨)
+// =======================
+window.bulkUploadToServer = function () {
+    const f = $("#bulkFile")[0]?.files?.[0];
+    if (!f) return alert("파일이 없습니다. 다시 선택하세요.");
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    $.ajax({
+        url: "/in_bulk_upload",
+        type: "POST",
+        data: fd,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        success: function (res) {
+            if (res.result === "ok") {
+                alert("✅ 업로드 완료 (" + (res.inserted || 0) + "건)");
+                location.reload();
+            } else {
+                alert("❌ 실패: " + (res.msg || ""));
+            }
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            alert("❌ 서버 오류");
+        }
+    });
+};
+
+// =======================
+// 4) 팝업 닫기 함수 (팝업에서 호출됨)
+// =======================
+window.bulkClosePopup = function () {
+    // 팝업 이름으로 찾아 닫기 (열려있으면 닫힘)
+    const p = window.open("", "bulkResult");
+    if (p && !p.closed) p.close();
+};
+
+// =======================
+// 5) 미리보기 버튼 (#fileUploadBtn)
+// =======================
+console.log("✅ script.js loaded");
+
+// -------------------------
+// 공용: XSS 방지
+// -------------------------
+function escapeHtml(s) {
+    return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+// -------------------------
+// 공용: 숫자 파싱 (콤마/공백 제거)
+// -------------------------
+function toNum(v) {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === "number") return v;
+    const s = String(v).trim().replaceAll(",", "");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+}
+
+// -------------------------
+// 팝업 닫기(부모창 함수)
+// -------------------------
+window.bulkClosePopup = function () {
+    const win = window.open("", "bulkResult");
+    if (win && !win.closed) win.close();
+};
+
+// -------------------------
+// 서버 저장(부모창 함수) - ✅ JSON으로 전송
+// -------------------------
+window.bulkUploadToServer = function () {
+    if (!window.__bulkPreview) {
+        alert("미리보기 데이터가 없습니다. 다시 미리보기부터 하세요.");
+        return;
+    }
+
+    const payload = {
+        headers: window.__bulkPreview.headers,
+        rows: window.__bulkPreview.body,
+        totalQty: window.__bulkPreview.totalQty,
+        totalWeight: window.__bulkPreview.totalWeight,
+    };
+
+    $.ajax({
+        url: "/in_bulk_upload_json",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(payload),
+        dataType: "json",
+        success: function (res) {
+            if (res.result === "ok") {
+                alert("✅ 저장 완료 (" + (res.inserted || 0) + "건)");
+                window.bulkClosePopup();
+                location.reload();
+            } else {
+                alert("❌ 실패: " + (res.msg || ""));
+            }
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            alert("❌ 서버 오류");
+        }
+    });
+};
+
+// -------------------------
+// 미리보기 버튼 클릭 → 서버 안 거치고 엑셀 파싱 → 팝업 출력
+// -------------------------
+$(document).on("click", "#fileUploadBtn", function (e) {
+    e.preventDefault();
+
+    const f = $("#bulkFile")[0]?.files?.[0];
+    if (!f) return alert("파일 먼저 선택!");
+
+    // ✅ XLSX 로드 확인(부모창에서 로드되어 있어야 함)
+    if (typeof XLSX === "undefined") {
+        alert("❌ XLSX가 로드되지 않았음. tool.html에 xlsx 스크립트 포함 확인!");
+        return;
+    }
+
+    // ✅ 팝업 먼저 열기 (차단 방지)
+    const win = window.open("", "bulkResult", "width=1400,height=850,scrollbars=yes");
+    if (!win) return alert("팝업 차단됨! (브라우저 팝업 허용 필요)");
+
+    win.document.open();
+    win.document.write(`
+    <!doctype html>
+    <html lang="ko">
+    <head>
+      <meta charset="utf-8"/>
+      <title>미리보기</title>
+      <style>
+        body{font-family:Arial;padding:12px}
+        .title{font-size:22px;font-weight:800;margin:0 0 8px}
+        .meta{margin:6px 0 10px;color:#333}
+      </style>
+    </head>
+    <body>
+      <div class="title">엑셀 읽는 중...</div>
+      <div class="meta">파일: ${escapeHtml(f.name)}</div>
+    </body>
+    </html>
+  `);
+    win.document.close();
+
+    const reader = new FileReader();
+
+    reader.onerror = function () {
+        win.document.body.innerHTML = "<h2>파일 읽기 실패</h2>";
+    };
+
+    reader.onload = function (evt) {
+        try {
+            const data = new Uint8Array(evt.target.result);
+            const wb = XLSX.read(data, { type: "array" });
+
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+            if (!aoa.length) {
+                win.document.body.innerHTML = "<h2>빈 파일입니다</h2>";
+                return;
+            }
+
+            const headers = aoa[0].map(h => String(h).trim());
+            const body = aoa.slice(1).filter(r => r.some(v => String(v).trim() !== ""));
+
+            // ✅ 수량/중량 컬럼 찾기
+            const qtyIdx =
+                headers.indexOf("수량") !== -1 ? headers.indexOf("수량") :
+                    headers.indexOf("재고수량") !== -1 ? headers.indexOf("재고수량") :
+                        headers.findIndex(h => h.includes("수량"));
+
+            const wtIdx =
+                headers.indexOf("중량") !== -1 ? headers.indexOf("중량") :
+                    headers.indexOf("재고중량") !== -1 ? headers.indexOf("재고중량") :
+                        headers.findIndex(h => h.includes("중량"));
+
+            let totalQty = 0;
+            let totalWeight = 0;
+
+            body.forEach(r => {
+                totalQty += (qtyIdx >= 0 ? toNum(r[qtyIdx]) : 0);
+                totalWeight += (wtIdx >= 0 ? toNum(r[wtIdx]) : 0);
+            });
+
+            // ✅ 부모창 보관(이걸 그대로 서버로 전송)
+            window.__bulkPreview = { headers, body, totalQty, totalWeight };
+
+            // ✅ 팝업 결과 HTML
+            const tableHtml = `
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <title>미리보기</title>
+  <style>
+    body{font-family:Arial;padding:12px}
+    .title{font-size:22px;font-weight:800;margin:0 0 8px}
+    .meta{margin:6px 0 10px;color:#333}
+    .summary{
+      display:flex; gap:14px; flex-wrap:wrap;
+      padding:10px 12px; border:1px solid #ddd; border-radius:8px;
+      background:#fafafa; margin:10px 0 12px;
+      font-size:14px;
+    }
+    .summary b{font-size:16px}
+    .btns{display:flex; gap:10px; margin:10px 0 14px}
+    button{
+      padding:10px 14px; border:0; border-radius:8px;
+      cursor:pointer; font-weight:700;
+    }
+    .btn-cancel{background:#999; color:#fff}
+    .btn-upload{background:#1d4ed8; color:#fff}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ccc; padding:6px; font-size:13px; white-space:nowrap;}
+    th{background:#f5f5f5; position:sticky; top:0; z-index:2}
+    td.idx{background:#fcfcfc; text-align:right; font-weight:700; width:60px}
+  </style>
+</head>
+<body>
+  <div class="title">엑셀 미리보기</div>
+  <div class="meta">파일: ${escapeHtml(f.name)}</div>
+
+  <div class="summary">
+    <div>총건수: <b>${body.length.toLocaleString()}</b></div>
+    <div>수량합계: <b>${totalQty.toLocaleString()}</b></div>
+    <div>중량합계: <b>${totalWeight.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</b></div>
+  </div>
+
+  <div class="btns">
+    <button class="btn-cancel" onclick="window.opener.bulkClosePopup()">취소(닫기)</button>
+    <button class="btn-upload" onclick="window.opener.bulkUploadToServer()">파일업로드(서버저장)</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>순번</th>
+        ${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}
+      </tr>
+    </thead>
+    <tbody>
+      ${body.map((r, idx) => `
+        <tr>
+          <td class="idx">${idx + 1}</td>
+          ${headers.map((_, i) => `<td>${escapeHtml(r[i] ?? "")}</td>`).join("")}
+        </tr>
+      `).join("")}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+            win.document.open();
+            win.document.write(tableHtml);
+            win.document.close();
+
+        } catch (err) {
+            console.error(err);
+            win.document.body.innerHTML =
+                "<h2>엑셀 파싱 실패</h2><pre>" + escapeHtml(String(err)) + "</pre>";
+        }
+    };
+
+    reader.readAsArrayBuffer(f);
+});
+
+
+
+// window.bulkUploadToServer = function () {
+//     const f = $("#bulkFile")[0]?.files?.[0];
+//     if (!f) return alert("파일이 없습니다. 다시 선택하세요.");
+
+//     const fd = new FormData();
+//     fd.append("file", f);
+
+//     $.ajax({
+//         url: "/in_bulk_upload",
+//         type: "POST",
+//         data: fd,
+//         processData: false,
+//         contentType: false,
+//         dataType: "json",
+//         success: function (res) {
+//             if (res.result === "ok") {
+//                 alert("✅ 업로드 완료 (" + (res.inserted || 0) + "건)");
+//                 location.reload();
+//             } else {
+//                 alert("❌ 실패: " + (res.msg || ""));
+//             }
+//         },
+//         error: function (xhr) {
+//             console.log(xhr.responseText);
+//             alert("❌ 서버 오류");
+//         }
+//     });
+// };

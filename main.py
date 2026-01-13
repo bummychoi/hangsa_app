@@ -3,6 +3,9 @@ from datetime import datetime,timedelta
 import pymysql
 import pandas as pd
 import re
+
+from decimal import Decimal, InvalidOperation
+
 app = Flask(__name__)
 conn = pymysql.connect(
     host="127.0.0.1",
@@ -66,7 +69,7 @@ def in_list():
         return jsonify({"error": str(e)}), 500
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT * FROM in_d_bar ORDER BY date_at DESC')
+            cur.execute('SELECT * FROM in_d_bar ORDER BY date_at DESC;')
             contents = cur.fetchall()
             rows=[{"lot_no":row[0],
                     "vessel_name":row[1],
@@ -389,6 +392,140 @@ def out_d_bar():
         app.logger.exception("out_d_bar error")
         return str(e), 500
 
+@app.route("/in_bulk_upload_json", methods=["POST"])
+def in_bulk_upload_json():
+    print("✅ /in_bulk_upload_json CALLED")
+    print("✅ content-type:", request.content_type)
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        print("❌ JSON NONE. raw=", request.data[:300])
+        return jsonify(result="fail", msg="JSON 데이터 없음"), 400
+
+    # ✅ 먼저 꺼내야 함 (NameError 방지)
+    headers = data.get("headers", [])
+    rows = data.get("rows", [])
+    client_total_qty = data.get("totalQty", 0)
+    client_total_weight = data.get("totalWeight", 0)
+
+    if not headers or not rows:
+        return jsonify(result="fail", msg="헤더 또는 데이터 비어있음"), 400
+
+    # ✅ 헤더 정규화 (공백 제거 + / 정리)
+    def norm(h):
+        s = str(h)
+        s = re.sub(r"\s+", "", s)   # 모든 공백 제거
+        s = s.replace("/", "")      # LOT/NO -> LOTNO (원하면 유지해도 됨)
+        return s.upper()
+
+    norm_headers = [norm(h) for h in headers]
+
+    # ---------------------------
+    # 컬럼 인덱스 찾기 (norm_headers 기준)
+    # ---------------------------
+    def find_idx(cands):
+        for c in cands:
+            c = norm(c)
+            if c in norm_headers:
+                return norm_headers.index(c)
+        return -1
+
+    idx_lot    = find_idx(["LOT/NO", "LOT / NO", "LOTNO", "LOT", "LOT NO"])
+    idx_vsl    = find_idx(["선명"])
+    idx_owner  = find_idx(["원화주", "화주"])
+    idx_qty    = find_idx(["재고수량", "수량"])
+    idx_wt     = find_idx(["재고중량", "중량"])
+    idx_size   = find_idx(["규격"])
+    idx_cn     = find_idx(["CN", "C/N"])
+    idx_origin = find_idx(["원산지"])
+    idx_cargo  = find_idx(["통관"])
+    idx_cust   = find_idx(["수탁품"])
+    idx_steel  = find_idx(["강종", "재질", "STEEL"])
+
+    print("✅ idx:", idx_lot, idx_vsl, idx_owner, idx_qty, idx_wt)
+
+    if idx_lot < 0 or idx_qty < 0 or idx_wt < 0 or idx_vsl < 0 or idx_owner < 0:
+        return jsonify(result="fail", msg="필수 컬럼(LOT/NO, 선명, 화주, 수량, 중량) 누락"), 400
+
+    # ---------------------------
+    # 숫자 파싱
+    # ---------------------------
+    def to_num(v):
+        try:
+            return float(str(v).replace(",", "").strip())
+        except:
+            return 0.0
+
+    # 합계 재검증
+    server_total_qty = 0.0
+    server_total_wt  = 0.0
+    for r in rows:
+        server_total_qty += to_num(r[idx_qty])
+        server_total_wt  += to_num(r[idx_wt])
+
+    if abs(server_total_qty - float(client_total_qty)) > 0.0001 or \
+       abs(server_total_wt  - float(client_total_weight)) > 0.0001:
+        return jsonify(
+            result="fail",
+            msg="합계 불일치",
+            serverQty=server_total_qty, serverWt=server_total_wt,
+            clientQty=client_total_qty, clientWt=client_total_weight
+        ), 400
+
+    # ---------------------------
+    # DB 저장
+    # ---------------------------
+    inserted = 0
+    try:
+        with conn.cursor() as cur:
+            for r in rows:
+                lot_no = str(r[idx_lot]).strip()
+                if not lot_no or lot_no.lower() == "nan":
+                    continue
+
+                vessel_name = str(r[idx_vsl]).strip()
+                owner_name  = str(r[idx_owner]).strip()
+
+                bl_no  = (str(r[idx_cn]).strip() if idx_cn >= 0 and str(r[idx_cn]).strip() else "미상")
+                maker  = (str(r[idx_origin]).strip() if idx_origin >= 0 and str(r[idx_origin]).strip() else "미상")
+
+                cargo_no   = (str(r[idx_cargo]).strip() if idx_cargo >= 0 else "")
+                cargo_type = (str(r[idx_cust]).strip()  if idx_cust  >= 0 else "")
+                steel_type = (str(r[idx_steel]).strip() if idx_steel >= 0 else "")
+                size       = (str(r[idx_size]).strip()  if idx_size  >= 0 else "")
+
+                bundle_qty = float(to_num(r[idx_qty]))
+                mt_weight  = round(to_num(r[idx_wt]), 3)
+
+                cur.execute("""
+                    INSERT INTO in_d_bar
+                    (lot_no, vessel_name, owner_name, cargo_no, bl_no, maker,
+                     cargo_type, steel_type, size, bundle_qty, mt_weight)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    ON DUPLICATE KEY UPDATE
+                        vessel_name=VALUES(vessel_name),
+                        owner_name=VALUES(owner_name),
+                        cargo_no=VALUES(cargo_no),
+                        bl_no=VALUES(bl_no),
+                        maker=VALUES(maker),
+                        cargo_type=VALUES(cargo_type),
+                        steel_type=VALUES(steel_type),
+                        size=VALUES(size),
+                        bundle_qty=VALUES(bundle_qty),
+                        mt_weight=VALUES(mt_weight)
+                """, (
+                    lot_no, vessel_name, owner_name, cargo_no, bl_no, maker,
+                    cargo_type, steel_type, size, bundle_qty, mt_weight
+                ))
+                inserted += 1
+
+        conn.commit()  # ✅ 확실히 커밋
+        return jsonify(result="ok", inserted=inserted)
+
+    except Exception as e:
+        conn.rollback()
+        print("🔥 DB ERROR:", e)
+        return jsonify(result="fail", msg=str(e)), 500
 
 
 
@@ -681,146 +818,10 @@ def out_delete_by_outno():
     finally:
         conn.close()
 
-def _clean_str(v):
-    if v is None:
-        return ""
-    try:
-        if pd.isna(v):
-            return ""
-    except:
-        pass
-    return str(v).strip()
 
-def _to_int(v, default=None):
-    try:
-        if v is None: return default
-        if pd.isna(v): return default
-        return int(float(v))
-    except:
-        return default
 
-def _to_float(v, default=None):
-    try:
-        if v is None: return default
-        if pd.isna(v): return default
-        return float(v)
-    except:
-        return default
 
-def _norm_col(x: str) -> str:
-    # 공백/탭/개행 제거 + 특수문자 정리
-    s = str(x)
-    s = re.sub(r"\s+", "", s)      # 모든 공백 제거
-    s = s.replace("/", "")         # LOT/NO -> LOTNO
-    s = s.replace("-", "")
-    s = s.upper()
-    return s
 
-def _pick_col(col_map, *candidates):
-    # candidates: "LOTNO", "LOTNO.", ...
-    for c in candidates:
-        if c in col_map:
-            return col_map[c]
-    return None
-
-@app.route("/in_bulk_upload", methods=["POST"])
-def in_bulk_upload():
-    if "file" not in request.files:
-        return jsonify(result="fail", msg="file 파라미터가 없습니다."), 400
-
-    f = request.files["file"]
-
-    try:
-        df = pd.read_excel(f, engine="openpyxl")
-    except Exception as e:
-        return jsonify(result="fail", msg=f"엑셀 읽기 실패: {e}"), 400
-
-    # ✅ 실제 엑셀 컬럼명(원본)을 norm해서 매핑 테이블 만듦
-    col_map = {_norm_col(c): c for c in df.columns}
-
-    # ✅ 너 엑셀 기준으로 필요한 컬럼 찾기
-    col_lot    = _pick_col(col_map, "LOTNO")                 # LOT / NO
-    col_vsl    = _pick_col(col_map, "선명".upper())          # 선명
-    col_owner  = _pick_col(col_map, "원화주".upper(), "화주".upper())  # 원화주 우선
-    col_cn     = _pick_col(col_map, "CN")                    # C/N -> CN
-    col_cust   = _pick_col(col_map, "수탁품".upper())        # 수 탁 품
-    col_size   = _pick_col(col_map, "규격".upper())          # 규  격
-    col_u_wt   = _pick_col(col_map, "단위중량".upper())
-    col_qty    = _pick_col(col_map, "재고수량".upper())
-    col_wt     = _pick_col(col_map, "재고중량".upper())
-    col_origin = _pick_col(col_map, "원산지".upper())        # ✅ 원산지 -> maker로 사용
-    col_cargo  = _pick_col(col_map, "통관".upper())
-
-    required = {
-        "LOT/NO": col_lot,
-        "선명": col_vsl,
-        "화주(또는 원화주)": col_owner,
-        "재고수량": col_qty,
-        "재고중량": col_wt,
-    }
-    missing = [k for k, v in required.items() if v is None]
-    if missing:
-        return jsonify(result="fail", msg=f"엑셀 헤더 누락: {missing}"), 400
-
-    DEFAULT_MAKER = "미상"
-    DEFAULT_BLNO  = "미상"
-
-    inserted = 0
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            for _, r in df.iterrows():
-                lot_no = str(r[col_lot]).strip()
-                vessel_name = str(r[col_vsl]).strip()
-                owner_name = str(r[col_owner]).strip()
-
-                bl_no = str(r[col_cn]).strip() if col_cn and pd.notna(r[col_cn]) else DEFAULT_BLNO
-                cargo_no = str(r[col_cargo]).strip() if col_cargo and pd.notna(r[col_cargo]) else ""
-
-                cargo_type = str(r[col_cust]).strip() if col_cust and pd.notna(r[col_cust]) else ""
-                size = str(r[col_size]).strip() if col_size and pd.notna(r[col_size]) else ""
-
-                bundle_qty = int(float(r[col_qty])) if col_qty and pd.notna(r[col_qty]) else 0
-                mt_weight  = float(r[col_wt]) if col_wt and pd.notna(r[col_wt]) else 0.0
-                unit_wt    = float(r[col_u_wt]) if col_u_wt and pd.notna(r[col_u_wt]) else 0.0
-
-                # ✅ 핵심 수정: maker(제강사) = 원산지 값 사용
-                maker = str(r[col_origin]).strip() if col_origin and pd.notna(r[col_origin]) else DEFAULT_MAKER
-
-                # (선택) LOT 비어있으면 스킵/에러 처리
-                if not lot_no or lot_no.lower() == "nan":
-                    continue
-
-                cur.execute("""
-                    INSERT INTO in_d_bar
-                    (lot_no, vessel_name, owner_name, cargo_no, bl_no, maker,
-                     cargo_type, size, bundle_qty, mt_weight, unit_wt)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    ON DUPLICATE KEY UPDATE
-                        vessel_name=VALUES(vessel_name),
-                        owner_name=VALUES(owner_name),
-                        cargo_no=VALUES(cargo_no),
-                        bl_no=VALUES(bl_no),
-                        maker=VALUES(maker),
-                        cargo_type=VALUES(cargo_type),
-                        size=VALUES(size),
-                        bundle_qty=VALUES(bundle_qty),
-                        mt_weight=VALUES(mt_weight),
-                        unit_wt=VALUES(unit_wt)
-                """, (lot_no, vessel_name, owner_name, cargo_no, bl_no, maker,
-                      cargo_type, size, bundle_qty, mt_weight, unit_wt))
-
-                inserted += 1
-
-        conn.commit()
-        return jsonify(result="ok", inserted=inserted, rows=len(df))
-
-    except Exception as e:
-        conn.rollback()
-        return jsonify(result="fail", msg=str(e)), 500
-
-    finally:
-        conn.close()
 
 @app.route("/out_bulk_form", methods=["GET"])
 def out_bulk_form():
@@ -1038,6 +1039,15 @@ def out_bulk_save():
     except Exception as e:
         conn.rollback()
         return jsonify({"ok": False, "msg": str(e)}), 500
+    
+
+# @app.route("/up_list")
+# def up_list():
+#     return in_list()
+
+
+
+
 # if __name__ == "__main__":
 #     # print(app.url_map)
 #     app.run(host="127.0.0.1", port=8000, debug=True)
