@@ -42,13 +42,13 @@
     {% endfor %}
     <div class="summary-bar">
         <span class="sum-item">
-            입고합계 <b>{{ "{:,}".format(ns.total_in|int) }}</b>
+            입고합계 <b>{{ "{:,.1f}".format(ns.total_in|int) }}</b>
         </span>
         <span class="sum-item">
-            출고합계 <b>{{ "{:,}".format(ns.total_out|int) }}</b>
+            출고합계 <b>{{ "{:,.1f}".format(ns.total_out|int) }}</b>
         </span>
         <span class="sum-item sum-strong">
-            재고합계 <b>{{ "{:,}".format(ns.total_stock|int) }}</b>
+            재고합계 <b>{{ "{:,.1f}".format(ns.total_stock|int) }}</b>
         </span>
     </div>
 

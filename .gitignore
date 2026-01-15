@@ -15,3 +15,7 @@ dist/
 
 tool/mysql-installer-community-8.0.43.0 (1).msi
 *.msi
+dist/
+build/
+venv/
+__pycache__/

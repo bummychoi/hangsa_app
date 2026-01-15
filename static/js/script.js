@@ -22,40 +22,49 @@ $(function () {
     })
 
 
-
     let selectedLot = null;
 
     $("table tbody").on("dblclick", "tr", function () {
-        selectedLot = $(this).data('lot') || this.id;
+        const $td = $(this).children("td");
+
+        // ✅ 헤더: 순번(0) LOT(1) ... 이므로 LOT는 eq(1)
+        selectedLot = $td.eq(1).text().trim();
+
+        if (!selectedLot) {
+            alert("LOT/NO를 읽지 못했습니다.");
+            return;
+        }
+
         $("#lotText").text(`${selectedLot} 선택`);
         $("#lotModal").fadeIn(150);
-        const url = `/search?id=${encodeURIComponent(selectedLot)}`;
-        fetch(url).then(res => res.json()).then(data => {
-            // console.log(data);
-            $("#f_lot_no").val(data.lot_no);
-            $("#f_vessel_name").val(data.vessel_name);
-            $("#f_cargo_no").val(data.cargo_no);
-            $("#f_cargo_type").val(data.cargo_type);
-            $("#f_bl_no").val(data.bl_no);
-            $("#f_owner_name").val(data.owner_name);
-            $("#f_size").val(data.size);
-            $("#f_bundle_qty").val(data.bundle_qty);
-            $("#f_mt_weight").val(data.mt_weight);
-            $("#f_maker").val(data.maker);
-            $("#f_steel_type").val(data.steel_type);
-            // f_date input이 실제로 있으면만 세팅
-            if ($("#f_date").length && data.date) $("#f_date").val(data.date);
 
-            $("#lotText").text(`${data.lot_no} 선택`);
-        })
+        fetch(`/search?id=${encodeURIComponent(selectedLot)}`)
+            .then(res => res.json())
+            .then(data => {
+                // ✅ 서버에서 온 lot_no로 한번 더 확정 (안전)
+                selectedLot = (data.lot_no || "").trim();
 
+                $("#f_lot_no").val(selectedLot);
+                $("#f_vessel_name").val(data.vessel_name || "");
+                $("#f_owner_name").val(data.owner_name || "");
+                $("#f_cargo_no").val(data.cargo_no || "");
+                $("#f_bl_no").val(data.bl_no || "");
+                $("#f_cargo_type").val(data.cargo_type || "");
+                $("#f_maker").val(data.maker || "");
+                $("#f_steel_type").val(data.steel_type || "");
+                $("#f_size").val(data.size || "");
+                $("#f_bundle_qty").val(data.bundle_qty ?? "");
+                $("#f_mt_weight").val(data.mt_weight ?? "");
+
+                $("#lotText").text(`${selectedLot} 선택`);
+            })
             .catch(err => {
                 console.error("fetch error", err);
-                // $("#lotText").text("조회 실패");
-                // alert("데이터 조회 실패");
+                alert("데이터 조회 실패");
             });
-
     });
+
+
 })
 
 function in_btn() {

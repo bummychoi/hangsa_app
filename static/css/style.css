@@ -36,7 +36,7 @@ header {
 
 .contents {
   width: 100%;
-  height: calc(100% - 100px - 150px);
+  height: calc(100% - 100px - 100px);
   background: rgb(174, 242, 237);
   overflow: auto;
 }
@@ -179,33 +179,51 @@ nav>ul>li:hover>a {
 /* =========================
    Footer
    ========================= */
-footer {
-  height: 100px;
-  display: flex;
-  text-align: center;
-  align-content: center;
+footer{
+  height:110px;
+  background:#d5ebf6;
+  display:flex;
+  align-items:center;
 }
 
-footer>.flogo {
-  width: 200px;
-  background: rgb(29, 14, 169);
-  text-align: center;
-  align-content: center;
+.flogo{
+  width:300px;
+  height:100%;
+  /* background:white; */
+  display:flex;
+  align-items: center;
 }
 
-footer>.sns {
-  width: 550px;
-  background: palegreen;
-  text-align: center;
-  align-content: center;
+.flogo h2{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  /* background:yellow; */
+  display:flex;
+  align-items: center;
 }
 
-footer>.copy {
-  flex: 1;
-  background: skyblue;
-  text-align: center;
-  align-content: center;
+.flogo h2 img{
+  width:auto;
+  height:100%;
+  object-fit: contain;   /* cover → contain */
+  cursor: pointer;
 }
+
+.copy{
+  flex:1;
+  text-align:center;
+  font-size:13px;
+}
+
+.sns{
+  width:150px;
+  text-align:center;
+  font-size:25px;
+}
+
+
 
 /* =========================
    Modal (공통)

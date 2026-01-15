@@ -32,7 +32,7 @@ with conn.cursor() as cur:
                     cargo_type VARCHAR(20),\
                     steel_type VARCHAR(20),\
                     size VARCHAR(20),\
-                    bundle_qty int,\
+                    bundle_qty DECIMAL(10,1) NOT NULL DEFAULT 0.0,\
                     mt_weight decimal(10,3),\
                     date_at DATETIME DEFAULT CURRENT_TIMESTAMP\
                     );")
@@ -189,9 +189,9 @@ def search():
         return jsonify({
             "lot_no": row[0],
             "vessel_name": row[1],
-            "cargo_no":row[2],
-            "bl_no": row[3],
-            "owner_name": row[4],
+            "bl_no":row[2],
+            "owner_name": row[3],
+            "cargo_no": row[4],
             "cargo_type":row[5],
             "size": row[6],
             "bundle_qty": row[7],
