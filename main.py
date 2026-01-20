@@ -898,12 +898,12 @@ def out_bulk_save():
         conn.rollback()
         return jsonify({"result": "fail", "msg": str(e)}), 500
 
-# if __name__ == "__main__":
-#     # print(app.url_map)
-#     app.run(host="127.0.0.1", port=5000, debug=True)
-
 if __name__ == "__main__":
-    import webbrowser
-    webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-    app.run(host="127.0.0.1", port=8000)
+    # print(app.url_map)
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
+# if __name__ == "__main__":
+#     import webbrowser
+#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
+#     app.run(host="127.0.0.1", port=8000)
 

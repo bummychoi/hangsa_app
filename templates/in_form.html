@@ -1,6 +1,7 @@
 {% extends "tool.html" %}
 
 {% block contents %}
+<script src="{{ url_for('static', filename='js/in_list_from.js') }}?v=20260120_1"></script>
 <div class="popup-wrap">
     <!-- ✅ 단일 form (중첩 form 금지) -->
     <form method="POST" action="{{ url_for('in_form') }}" enctype="multipart/form-data">
@@ -18,7 +19,6 @@
 
                     <!-- ✅ submit이 아니라 버튼 클릭(AJAX) -->
                     <button type="button" class="bulk-btn" id="fileUploadBtn">입고업로드</button>
-
                 </div>
             </div>
 

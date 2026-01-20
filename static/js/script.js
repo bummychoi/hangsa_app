@@ -572,48 +572,92 @@
     $("#bulkFileName").text(file.name);
   });
 
-  // =======================
-  // ✅ 입고 JSON 저장(부모창 함수) — 중복 제거하고 1개만 유지
-  // =======================
-  window.bulkClosePopup = function () {
-    const win = window.open("", "bulkResult");
-    if (win && !win.closed) win.close();
-  };
+  // ✅ 입고업로드 버튼: 엑셀 파싱 → __bulkPreview 세팅 → 미리보기 팝업 열기
+  $(document).on("click", "#fileUploadBtn", function () {
+    const input = document.getElementById("bulkFile");
 
-  window.bulkUploadToServer = function () {
-    if (!window.__bulkPreview) {
-      alert("미리보기 데이터가 없습니다. 다시 미리보기부터 하세요.");
+    if (!input || !input.files || !input.files.length) {
+      alert("엑셀 파일을 먼저 선택하세요.");
       return;
     }
 
-    const payload = {
-      headers: window.__bulkPreview.headers,
-      rows: window.__bulkPreview.body,
-      totalQty: window.__bulkPreview.totalQty,
-      totalWeight: window.__bulkPreview.totalWeight,
+    if (typeof XLSX === "undefined") {
+      alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
+      return;
+    }
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+        if (!body.length) {
+          alert("엑셀 데이터가 비어있습니다.");
+          return;
+        }
+
+        const headers = Object.keys(body[0] || {});
+
+        // ✅ 서버 합계 검증 통과하려면 totalQty/totalWeight 계산 필요
+        const norm = (h) => String(h || "").replace(/\s+/g, "").replace(/\//g, "").toUpperCase();
+        const normHeaders = headers.map(norm);
+
+        const findIdx = (cands) => {
+          for (const c of cands) {
+            const key = norm(c);
+            const idx = normHeaders.indexOf(key);
+            if (idx >= 0) return idx;
+          }
+          return -1;
+        };
+
+        const idx_qty = findIdx(["재고수량", "수량"]);
+        const idx_wt = findIdx(["재고중량", "중량"]);
+
+        const toNum = (v) => {
+          const n = parseFloat(String(v ?? "").replace(/,/g, "").trim());
+          return isNaN(n) ? 0 : n;
+        };
+
+        let totalQty = 0;
+        let totalWeight = 0;
+
+        // sheet_to_json이 객체배열이라 index 계산 위해 배열화
+        body.forEach((obj) => {
+          const arr = headers.map((h) => obj[h]);
+          if (idx_qty >= 0) totalQty += toNum(arr[idx_qty]);
+          if (idx_wt >= 0) totalWeight += toNum(arr[idx_wt]);
+        });
+
+        totalWeight = Math.round(totalWeight * 1000) / 1000;
+
+        window.__bulkPreview = { headers, body, totalQty, totalWeight };
+
+        // ✅ 미리보기 창 열기 (이 창이 bulkResult 이름을 써야 bulkClosePopup이 닫음)
+        const w = 1100, h = 900;
+        const left = Math.floor((window.screen.width - w) / 2);
+        const top = Math.floor((window.screen.height - h) / 2);
+        window.open("/in_bulk_preview", "bulkResult",
+          `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+      } catch (err) {
+        console.error(err);
+        alert("엑셀 파싱 실패: " + err.message);
+      }
     };
 
-    $.ajax({
-      url: "/in_bulk_upload_json",
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(payload),
-      dataType: "json",
-      success: function (res) {
-        if (res.result === "ok") {
-          alert("✅ 저장 완료 (" + (res.inserted || 0) + "건)");
-          window.bulkClosePopup();
-          location.reload();
-        } else {
-          alert("❌ 실패: " + (res.msg || ""));
-        }
-      },
-      error: function (xhr) {
-        console.log(xhr.responseText);
-        alert("❌ 서버 오류");
-      },
-    });
-  };
+    reader.readAsArrayBuffer(file);
+  });
+
+
+
+
 
   // =======================
   // out_bulk_form 팝업 열기 버튼
@@ -637,6 +681,11 @@
     if (pop) pop.focus();
   });
 
+  $(document).on("click", "#fileUploadBtn", function () {
+    window.bulkUploadToServer();
+  });
+
+
   // work_date 기본값
   $(function () {
     if ($("#work_date").length && !$("#work_date").val()) {
@@ -658,3 +707,37 @@
 
   console.log("✅ script.js loaded (clean)");
 })();
+
+$(document).on("click", "#btnParse_view", function () {
+  const input = document.getElementById("bulkFile");
+  if (!input.files || !input.files.length) {
+    alert("엑셀 파일을 먼저 선택하세요.");
+    return;
+  }
+
+  const file = input.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+    const totalQty = 0;
+    const totalWeight = 0;
+
+    window.__bulkPreview = {
+      headers: Object.keys(rows[0] || {}),
+      body: rows,
+      totalQty,
+      totalWeight,
+    };
+
+    // ✅ 여기만 /in_up_list 로!
+    window.open("/in_up_list", "bulkResult", "width=1100,height=900,scrollbars=yes");
+  };
+
+  reader.readAsArrayBuffer(file);
+});
