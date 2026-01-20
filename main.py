@@ -57,6 +57,7 @@ with conn.cursor() as cur:
               ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
     """)
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -827,233 +828,82 @@ def out_delete_by_outno():
 def out_bulk_form():
     return render_template("out_bulk_form.html")
 
-# =========================
-# OUT BULK SAVE (최종)
-# - 엑셀 복붙 텍스트에서:
-#   out_no = (일자8자리 + 번호4자리)
-#   lot_no = LOT 패턴(250821-196, 251212-13-Q1 등)
-#   car_no = 차량번호 패턴(89오4552, 경기93아5400 등)
-#   out_qty = "운송수량" (제강사/원산지 다음에 나오는 첫 숫자 우선)
-# - out_date = DB DEFAULT CURRENT_TIMESTAMP 사용 (INSERT에서 out_date 제외)
-# - (out_no, lot_no) UNIQUE 기준으로 중복 방지 + ON DUPLICATE KEY UPDATE(수량 합산)
-# =========================
+def _clean(v):
+    return (str(v).strip() if v is not None else "")
 
-import re
-from datetime import datetime
-from flask import request, jsonify
-
-# ---- patterns
-LOT_RE   = re.compile(r"^\d{6}-[A-Za-z0-9-]+$")   # 251215-1650, 251212-13-Q1
-DATE8_RE = re.compile(r"^\d{8}$")                 # 20260102
-SEQ4_RE  = re.compile(r"^\d{4}$")                 # 0003
-
-# 숫자(소수 포함)
-def _is_num(s: str) -> bool:
-    try:
-        float(str(s).replace(",", ""))
-        return True
-    except:
-        return False
-
-def _to_float(s: str, default=None):
-    try:
-        return float(str(s).replace(",", "").strip())
-    except:
+def _to_decimal(v, default=Decimal("0")):
+    s = _clean(v).replace(",", "")
+    if s == "":
         return default
-
-# 차량번호: "89오4552" / "84저3196" / "경기93아5400" / "서울87아2216" / "전북81사4321" 등
-CAR_RE = re.compile(r"^(?:[가-힣]{2}\d{2}[가-힣]\d{4}|\d{2,3}[가-힣]\d{4})$")
-
-def _clean_token(s: str) -> str:
-    if s is None:
-        return ""
-    s = str(s).replace("\u00a0", " ").strip()
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
-
-def _tokenize_line(line: str):
-    """
-    엑셀 복붙 라인: 탭 기준이지만, 셀 안에 공백이 섞일 수 있어 2단계로 토큰화
-    """
-    cols = [c for c in line.split("\t") if str(c).strip() != ""]
-    toks = []
-    for c in cols:
-        c = _clean_token(c)
-        if not c:
-            continue
-        # 셀 안 공백을 다시 쪼개기 (단, 한글 회사명 등은 통째로 남아도 상관 없음)
-        toks.extend([x for x in c.split(" ") if x.strip() != ""])
-    # 공백 제거(토큰 내부 공백 제거가 필요할 때가 있어서 한 번 더)
-    toks = [re.sub(r"\s+", "", t) for t in toks if t]
-    return toks
-
-# "제강사/원산지 힌트" (네 화면에 나오는 값들 위주)
-MAKER_HINT = (
-    "중국", "중국산", "일본", "일본산", "국산",
-    "POSCO", "포스코", "JFE", "현대", "동국", "KISCO",
-)
-
-def _pick_qty(tokens):
-    """
-    운송수량 추출:
-    1) 제강사/원산지 힌트가 들어있는 토큰 뒤에서 가장 먼저 나오는 숫자 => 운송수량
-    2) 없으면 fallback:
-       - DATE8/SEQ4 제외
-       - 0보다 큰 숫자 중, '너무 큰 날짜(>=10000000)'는 제외
-       - 첫 번째 값 사용
-    """
-    # 1) maker hint 뒤 숫자
-    for i, t in enumerate(tokens):
-        if any(h in t for h in MAKER_HINT):
-            for j in range(i + 1, min(i + 12, len(tokens))):
-                if _is_num(tokens[j]):
-                    v = _to_float(tokens[j])
-                    if v is not None:
-                        return v
-
-    # 2) fallback 숫자
-    for t in tokens:
-        if DATE8_RE.match(t) or SEQ4_RE.match(t):
-            continue
-        if _is_num(t):
-            v = _to_float(t)
-            if v is None:
-                continue
-            # 날짜 같은 큰 숫자 방지
-            if v >= 10000000:
-                continue
-            if v > 0:
-                return v
-
-    return 1.0
-
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        return default
 
 @app.route("/out_bulk_save", methods=["POST"])
 def out_bulk_save():
-    """
-    폼 필드:
-      - bulk_text: 엑셀에서 복사/붙여넣기한 텍스트 (필수)
-    """
-    bulk_text = (request.form.get("bulk_text") or "").strip()
+    data = request.get_json(silent=True) or {}
+    rows = data.get("rows", [])
 
-    if not bulk_text:
-        return jsonify({"ok": False, "msg": "붙여넣기 데이터(bulk_text)가 비었습니다."}), 400
-
-    lines = [ln for ln in bulk_text.splitlines() if ln.strip()]
-    parsed = []  # (out_no, lot, car_no, qty)
-
-    for ln in lines:
-        toks = _tokenize_line(ln)
-        if not toks:
-            continue
-
-        # out_no = 날짜8 + 번호4 (같은 줄에 있어야 함)
-        date8 = next((t for t in toks if DATE8_RE.match(t)), None)
-        seq4  = next((t for t in toks if SEQ4_RE.match(t)), None)
-        if not (date8 and seq4):
-            # 일자/번호가 없는 줄은 무시
-            continue
-        out_no = date8 + seq4
-
-        # lot
-        lot = next((t for t in toks if LOT_RE.match(t)), None)
-        if not lot:
-            continue
-
-        # car_no (없으면 None)
-        car_no = next((t for t in toks if CAR_RE.match(t)), None)
-        if not car_no:
-            car_no = None
-
-        # qty = 운송수량
-        qty = _pick_qty(toks)
-
-        parsed.append((out_no, lot, car_no, qty))
-
-    if not parsed:
-        return jsonify({"ok": False, "msg": "파싱된 행이 없습니다. (일자/번호/LOT 인식 실패)"}), 400
-
-    # ✅ (out_no, lot_no) 기준으로 중복 합치기 (같은 전표에서 같은 LOT가 여러 줄이면 수량 합산)
-    #    car_no는 값이 있으면 마지막 값으로 업데이트
-    key_map = {}
-    for out_no, lot, car, qty in parsed:
-        k = (out_no, lot)
-        if k not in key_map:
-            key_map[k] = {"qty": 0.0, "car": car}
-        key_map[k]["qty"] += float(qty or 0.0)
-        if car:
-            key_map[k]["car"] = car
-
-    unique_lots = list({lot for (_, lot) in key_map.keys()})
+    if not rows:
+        return jsonify({"result": "fail", "msg": "no rows"}), 400
 
     try:
         with conn.cursor() as cur:
-            # ✅ FK 통과: in_d_bar에 존재하는 LOT만 저장
-            fmt = ",".join(["%s"] * len(unique_lots))
-            cur.execute(f"SELECT lot_no FROM in_d_bar WHERE lot_no IN ({fmt})", unique_lots)
-            rows = cur.fetchall()
-            exists = set(r["lot_no"] if isinstance(r, dict) else r[0] for r in rows)
+            # 1) lot_no 리스트 만들기
+            lot_list = [_clean(r.get("lot_no")) for r in rows if _clean(r.get("lot_no"))]
+            lot_list = list(dict.fromkeys(lot_list))
+            if not lot_list:
+                return jsonify({"result": "fail", "msg": "no lot_no"}), 400
 
-            ok_rows = []
-            missing = []
+            # 2) lot 존재 검증
+            placeholders = ",".join(["%s"] * len(lot_list))
+            cur.execute(f"SELECT lot_no FROM in_d_bar WHERE lot_no IN ({placeholders})", lot_list)
+            exists = {x[0] for x in cur.fetchall()}
 
-            for (out_no, lot), v in key_map.items():
-                if lot not in exists:
-                    missing.append(lot)
-                    continue
-
-                # out_date는 DB DEFAULT CURRENT_TIMESTAMP 사용 (INSERT에서 제외)
-                ok_rows.append((out_no, lot, v["car"], v["qty"]))
-
-            if not ok_rows:
-                conn.rollback()
+            missing = [x for x in lot_list if x not in exists]
+            if missing:
                 return jsonify({
-                    "ok": True,
-                    "inserted": 0,
-                    "missing_count": len(set(missing)),
-                    "missing_lots": sorted(list(set(missing)))[:200],
-                    "msg": "저장할 LOT가 없습니다. (모두 누락 또는 FK 불일치)"
-                })
+                    "result": "fail",
+                    "msg": "입고(in_d_bar)에 없는 LOT/NO가 있어서 저장 불가",
+                    "missing_lot_no": missing[:50],
+                    "missing_count": len(missing)
+                }), 400
 
-            # ✅ (out_no, lot_no) UNIQUE 필요:
-            # ALTER TABLE out_d_bar ADD UNIQUE KEY uq_outno_lotno (out_no, lot_no);
-            #
-            # ✅ 중복이면 수량 합산, 차량번호는 새 값이 있으면 덮어씀
-            cur.executemany("""
-                INSERT INTO out_d_bar (out_no, lot_no, car_no, out_qty)
-                VALUES (%s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                    out_qty = out_qty + VALUES(out_qty),
-                    car_no  = COALESCE(VALUES(car_no), car_no)
-            """, ok_rows)
+            # 3) INSERT
+            insert_sql = """
+                INSERT INTO out_d_bar (out_no, lot_no, car_no, out_qty, out_date)
+                VALUES (%s, %s, %s, %s, NOW())
+            """
 
-            conn.commit()
+            saved = 0
+            for r in rows:
+                out_no = _clean(r.get("out_no"))
+                lot_no = _clean(r.get("lot_no"))
+                car_no = _clean(r.get("car_no")) or None
+                out_qty = _to_decimal(r.get("out_qty"), default=Decimal("0"))
 
-        return jsonify({
-            "ok": True,
-            "inserted": len(ok_rows),                 # 사용자 체감용(처리 대상 행 수)
-            "missing_count": len(set(missing)),
-            "missing_lots": sorted(list(set(missing)))[:200],
-        })
+                if not out_no or not lot_no:
+                    # 한 줄이라도 핵심값 없으면 즉시 실패 처리(원하면 continue로 바꿔도 됨)
+                    conn.rollback()
+                    return jsonify({"result": "fail", "msg": "row missing out_no/lot_no"}), 400
+
+                cur.execute(insert_sql, (out_no, lot_no, car_no, out_qty))
+                saved += 1
+
+        conn.commit()
+        return jsonify({"result": "ok", "msg": "saved", "saved_rows": saved}), 200
 
     except Exception as e:
         conn.rollback()
-        return jsonify({"ok": False, "msg": str(e)}), 500
-    
-
-# @app.route("/up_list")
-# def up_list():
-#     return in_list()
-
-
-
-
-# if __name__ == "__main__":
-#     # print(app.url_map)
-#     app.run(host="127.0.0.1", port=8000, debug=True)
+        return jsonify({"result": "fail", "msg": str(e)}), 500
 
 if __name__ == "__main__":
-    import webbrowser
-    webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-    app.run(host="127.0.0.1", port=8000)
+    # print(app.url_map)
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
+# if __name__ == "__main__":
+#     import webbrowser
+#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
+#     app.run(host="127.0.0.1", port=8000)
 
