@@ -1,34 +1,38 @@
 /* =========================
-   script.js (정리본)
-   - 핵심 수정: selectedLot 중복 선언 제거(전역 1개로 통일)
-   - 중복 함수(escapeHtml/toNum/bulkUploadToServer/bulkClosePopup) 1번만 유지
+   script.js (FULL - clean)
+   - selectedLot 전역 1개 통일
+   - 중복 이벤트 제거
+   - 엑셀 미리보기/저장(팝업) 포함
    ========================= */
 
 (function () {
+  // =======================
   // ✅ 전역 상태(중복 선언 방지)
+  // =======================
   window.selectedLot = window.selectedLot ?? null;
   window.__OUT_ROWS = window.__OUT_ROWS ?? [];
   window.__bulkPreview = window.__bulkPreview ?? null;
+  window.__IN_ROWS = window.__IN_ROWS ?? [];
 
   // =======================
-  // 공통 유틸
+  // ✅ 공통 유틸 (팝업에서도 쓰게 window에 노출)
   // =======================
-  function escapeHtml(s) {
+  window.escapeHtml = function (s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-  }
+  };
 
-  function toNum(v) {
+  window.toNum = function (v) {
     if (v === null || v === undefined) return 0;
     if (typeof v === "number") return v;
     const s = String(v).trim().replaceAll(",", "");
     const n = parseFloat(s);
     return isNaN(n) ? 0 : n;
-  }
+  };
 
   // =======================
   // 상단 날짜/메뉴 등(기존)
@@ -57,14 +61,9 @@
     // ✅ 재고 테이블 더블클릭 → 상세 모달
     $("table tbody").on("dblclick", "tr", function () {
       const $td = $(this).children("td");
+      window.selectedLot = $td.eq(1).text().trim(); // 순번(0) LOT(1)
 
-      // ✅ 헤더: 순번(0) LOT(1) ...
-      window.selectedLot = $td.eq(1).text().trim();
-
-      if (!window.selectedLot) {
-        alert("LOT/NO를 읽지 못했습니다.");
-        return;
-      }
+      if (!window.selectedLot) return alert("LOT/NO를 읽지 못했습니다.");
 
       $("#lotText").text(`${window.selectedLot} 선택`);
       $("#lotModal").fadeIn(150);
@@ -162,11 +161,7 @@
   $(document).on("click", "#btnDelete", function () {
     window.selectedLot = $("#f_lot_no").val();
 
-    if (!window.selectedLot) {
-      alert("LOT/NO가 없습니다.");
-      return;
-    }
-
+    if (!window.selectedLot) return alert("LOT/NO가 없습니다.");
     if (!confirm(`LOT ${window.selectedLot}을 삭제하시겠습니까?`)) return;
 
     fetch("/delete", {
@@ -261,16 +256,10 @@
 
   $(document).on("click", "#btnOut", function (e) {
     e.preventDefault();
-
     if (selectedLots_out.length === 0) return alert("출고 선택하세요!!");
 
     const params = selectedLots_out.map((lot) => `lot_no=${encodeURIComponent(lot)}`).join("&");
-
-    if (selectedLots_out.length === 1) {
-      location.href = `/out_form?${params}`;
-    } else {
-      location.href = `/out_list?${params}`;
-    }
+    location.href = selectedLots_out.length === 1 ? `/out_form?${params}` : `/out_list?${params}`;
   });
 
   // =======================
@@ -292,7 +281,6 @@
         $tr.addClass("row-error");
         return;
       }
-
       rows.push({ lot_no: lotNo, out_no: outNo, car_no: carNo, out_qty: outQty });
     });
 
@@ -378,7 +366,7 @@
   };
 
   window.goDate = function () {
-    const d = document.getElementById("datePicker").value;
+    const d = document.getElementById("datePicker")?.value;
     if (!d) return alert("날짜 선택!");
     location.href = "/out_d_bar_lists?date=" + encodeURIComponent(d);
   };
@@ -388,6 +376,8 @@
   // =======================
   document.addEventListener("DOMContentLoaded", () => {
     const rows = Array.from(document.querySelectorAll("tr.out-row"));
+    if (!rows.length) return;
+
     let prev = null;
     let groupIndex = 0;
 
@@ -398,7 +388,7 @@
         rows[i].classList.add("group-start");
         prev = outno;
       }
-      rows[i].dataset.group = groupIndex;
+      rows[i].dataset.group = String(groupIndex);
       rows[i].classList.add(groupIndex % 2 === 0 ? "g-even" : "g-odd");
     }
 
@@ -414,11 +404,11 @@
   // out_edit 저장/삭제(기존)
   // =======================
   window.saveEdit = function () {
-    const outNo = document.getElementById("out_no").innerText.trim();
+    const outNo = document.getElementById("out_no")?.innerText.trim();
     const rows = Array.from(document.querySelectorAll("tbody tr[data-id]")).map((tr) => ({
       id: tr.dataset.id,
-      car_no: tr.querySelector(".car_no").value.trim(),
-      out_qty: Number(tr.querySelector(".out_qty").value),
+      car_no: tr.querySelector(".car_no")?.value.trim() || "",
+      out_qty: Number(tr.querySelector(".out_qty")?.value),
     }));
 
     fetch("/out_edit_save", {
@@ -443,7 +433,7 @@
   };
 
   window.deleteOut = function () {
-    const outNo = document.getElementById("out_no").innerText.trim();
+    const outNo = document.getElementById("out_no")?.innerText.trim();
     if (!confirm(outNo + " 전체 삭제?")) return;
 
     fetch("/out_edit_delete", {
@@ -496,7 +486,6 @@
         $(this).find(".car_no").focus();
         return false;
       }
-
       if (isNaN(out_qty) || out_qty <= 0) {
         hasError = true;
         errorMsg = `ID ${id} : 출고수량은 0보다 커야 합니다.`;
@@ -535,7 +524,6 @@
 
     const out_no = $("#out_no").val();
     const date = $("#work_date").val();
-
     if (!out_no) return alert("out_no 값이 없습니다. (#out_no 확인)");
 
     $.ajax({
@@ -555,7 +543,7 @@
   }
 
   // =======================
-  // 파일명 표시(.xlsx)
+  // ✅ bulkFile 파일명 표시(.xlsx)
   // =======================
   $(document).on("change", "#bulkFile", function () {
     if (!this.files || !this.files.length) return;
@@ -572,15 +560,16 @@
     $("#bulkFileName").text(file.name);
   });
 
-  // ✅ 입고업로드 버튼: 엑셀 파싱 → __bulkPreview 세팅 → 미리보기 팝업 열기
-  $(document).on("click", "#fileUploadBtn", function () {
+  // =======================
+  // ✅ 입고업로드 버튼(기존 방식): /in_bulk_preview 라우트 팝업
+  // =======================
+  $(document).on("click", "#in_fileUploadBtn", function () {
     const input = document.getElementById("bulkFile");
 
     if (!input || !input.files || !input.files.length) {
       alert("엑셀 파일을 먼저 선택하세요.");
       return;
     }
-
     if (typeof XLSX === "undefined") {
       alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
       return;
@@ -596,14 +585,11 @@
         const ws = wb.Sheets[wb.SheetNames[0]];
         const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-        if (!body.length) {
-          alert("엑셀 데이터가 비어있습니다.");
-          return;
-        }
+        if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
 
         const headers = Object.keys(body[0] || {});
 
-        // ✅ 서버 합계 검증 통과하려면 totalQty/totalWeight 계산 필요
+        // 합계 계산(서버 검증용)
         const norm = (h) => String(h || "").replace(/\s+/g, "").replace(/\//g, "").toUpperCase();
         const normHeaders = headers.map(norm);
 
@@ -619,33 +605,29 @@
         const idx_qty = findIdx(["재고수량", "수량"]);
         const idx_wt = findIdx(["재고중량", "중량"]);
 
-        const toNum = (v) => {
-          const n = parseFloat(String(v ?? "").replace(/,/g, "").trim());
-          return isNaN(n) ? 0 : n;
-        };
-
         let totalQty = 0;
         let totalWeight = 0;
 
-        // sheet_to_json이 객체배열이라 index 계산 위해 배열화
         body.forEach((obj) => {
           const arr = headers.map((h) => obj[h]);
-          if (idx_qty >= 0) totalQty += toNum(arr[idx_qty]);
-          if (idx_wt >= 0) totalWeight += toNum(arr[idx_wt]);
+          if (idx_qty >= 0) totalQty += window.toNum(arr[idx_qty]);
+          if (idx_wt >= 0) totalWeight += window.toNum(arr[idx_wt]);
         });
 
         totalWeight = Math.round(totalWeight * 1000) / 1000;
 
         window.__bulkPreview = { headers, body, totalQty, totalWeight };
 
-        // ✅ 미리보기 창 열기 (이 창이 bulkResult 이름을 써야 bulkClosePopup이 닫음)
-        const w = 1100, h = 900;
+        const w = 1100,
+          h = 900;
         const left = Math.floor((window.screen.width - w) / 2);
         const top = Math.floor((window.screen.height - h) / 2);
-        window.open("/in_bulk_preview", "bulkResult",
+
+        window.open(
+          "/in_bulk_preview",
+          "bulkResult",
           `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
         );
-
       } catch (err) {
         console.error(err);
         alert("엑셀 파싱 실패: " + err.message);
@@ -654,10 +636,6 @@
 
     reader.readAsArrayBuffer(file);
   });
-
-
-
-
 
   // =======================
   // out_bulk_form 팝업 열기 버튼
@@ -681,10 +659,14 @@
     if (pop) pop.focus();
   });
 
-  $(document).on("click", "#fileUploadBtn", function () {
+  $(document).on("click", "#out_fileUploadBtn", function () {
+    // ✅ 네가 이미 가지고 있는 bulkUploadToServer() 사용
+    if (typeof window.bulkUploadToServer !== "function") {
+      alert("bulkUploadToServer() 함수가 없습니다. out bulk 스크립트 확인!");
+      return;
+    }
     window.bulkUploadToServer();
   });
-
 
   // work_date 기본값
   $(function () {
@@ -705,13 +687,65 @@
     $(this).hide();
   });
 
-  console.log("✅ script.js loaded (clean)");
+  console.log("✅ script.js loaded (FULL clean)");
 })();
 
+/* ===========================================================
+   ✅ 엑셀 → rows 정규화 + 팝업 미리보기 + JSON 저장
+   (btnParse_view 전용)
+   =========================================================== */
+
+// 엑셀 열 → 서버용 컬럼명 매핑
+function buildInRowsFromExcelBody(headers, body) {
+  return body.map((r) => ({
+    lot_no: String(r["LOT / NO"] ?? r["LOT/NO"] ?? "").trim(),
+    owner_name: String(r["화주"] ?? "").trim(),
+    cargo_type: String(r["수탁품"] ?? "").trim(),
+    size: String(r["규격"] ?? "").trim(),
+    unit_wt: Number(String(r["단위중량"] ?? "0").replaceAll(",", "")) || 0,
+    stock_qty: Number(String(r["재고수량"] ?? "0").replaceAll(",", "")) || 0,
+    stock_wt: Number(String(r["재고중량"] ?? "0").replaceAll(",", "")) || 0,
+  }));
+}
+
+window.validateInRows =function validateInRows(rows) {
+  for (const r of rows) {
+    if (!r.lot_no) return false;
+    if (!(r.stock_qty > 0)) return false;
+  }
+  return true;
+}
+
+// ✅ 서버 저장 (팝업 저장 버튼이 window.opener.saveInBulk(...) 호출)
+window.saveInBulk=async function saveInBulk(rows) {
+  if (!rows.length) return alert("업로드할 데이터가 없습니다.");
+  if (!validateInRows(rows)) return alert("필수값(LOT/수량 등) 누락이 있습니다.");
+  if (!confirm(`${rows.length}건을 저장할까요?`)) return;
+
+  const res = await fetch("/in_bulk_save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rows }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (res.ok && data.result === "ok") {
+    alert("입고 일괄 저장 완료");
+    location.reload();
+  } else {
+    alert("저장 실패: " + (data.msg || "서버 오류"));
+  }
+}
+
+// ✅ “미리보기” 버튼: 팝업에 테이블 그리고 저장 버튼 제공
 $(document).on("click", "#btnParse_view", function () {
   const input = document.getElementById("bulkFile");
-  if (!input.files || !input.files.length) {
+  if (!input || !input.files || !input.files.length) {
     alert("엑셀 파일을 먼저 선택하세요.");
+    return;
+  }
+  if (typeof XLSX === "undefined") {
+    alert("XLSX 라이브러리가 없습니다.");
     return;
   }
 
@@ -719,24 +753,84 @@ $(document).on("click", "#btnParse_view", function () {
   const reader = new FileReader();
 
   reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, { type: "array" });
-    const ws = wb.Sheets[wb.SheetNames[0]];
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-    const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
 
-    const totalQty = 0;
-    const totalWeight = 0;
+      const headers = Object.keys(body[0] || {});
+      const rows = buildInRowsFromExcelBody(headers, body);
 
-    window.__bulkPreview = {
-      headers: Object.keys(rows[0] || {}),
-      body: rows,
-      totalQty,
-      totalWeight,
-    };
+      let totalQty = 0,
+        totalWeight = 0;
+      rows.forEach((r) => {
+        totalQty += Number(r.stock_qty || 0);
+        totalWeight += Number(r.stock_wt || 0);
+      });
 
-    // ✅ 여기만 /in_up_list 로!
-    window.open("/in_up_list", "bulkResult", "width=1100,height=900,scrollbars=yes");
+      window.__IN_ROWS = rows;
+
+      const pop = window.open("", "bulkResult", "width=1100,height=900,scrollbars=yes,resizable=yes");
+      if (!pop) return alert("팝업이 차단되었습니다.");
+
+      pop.document.open();
+      pop.document.write(`
+        <!doctype html>
+        <html><head><meta charset="utf-8"><title>엑셀 미리보기</title>
+        <style>
+          body{font-family:Arial;padding:16px}
+          table{border-collapse:collapse;width:100%}
+          th,td{border:1px solid #ccc;padding:6px;font-size:12px}
+          th{background:#f3f3f3;position:sticky;top:0}
+          .bar{display:flex;gap:8px;align-items:center;margin:10px 0}
+          .bar button{padding:8px 12px}
+        </style>
+        </head><body>
+          <h2>엑셀 미리보기</h2>
+          <div>
+            총건수: <b>${rows.length}</b> /
+            수량합계: <b>${totalQty.toLocaleString()}</b> /
+            중량합계: <b>${totalWeight.toLocaleString()}</b>
+          </div>
+
+          <div class="bar">
+            <button onclick="window.opener.saveInBulk(window.opener.__IN_ROWS)">서버저장(JSON)</button>
+            <button onclick="window.close()">닫기</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>LOT</th><th>화주</th><th>품목</th><th>규격</th>
+                <th>단위중량</th><th>수량</th><th>중량</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.slice(0, 500).map(r => `
+                <tr>
+                  <td>${window.opener.escapeHtml(r.lot_no)}</td>
+                  <td>${window.opener.escapeHtml(r.owner_name)}</td>
+                  <td>${window.opener.escapeHtml(r.cargo_type)}</td>
+                  <td>${window.opener.escapeHtml(r.size)}</td>
+                  <td style="text-align:right">${r.unit_wt}</td>
+                  <td style="text-align:right">${r.stock_qty}</td>
+                  <td style="text-align:right">${r.stock_wt}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+
+          <p style="color:#666">※ 화면에는 500건까지만 표시(저장은 전체 저장)</p>
+        </body></html>
+      `);
+      pop.document.close();
+    } catch (err) {
+      console.error(err);
+      alert("엑셀 파싱 실패: " + err.message);
+    }
   };
 
   reader.readAsArrayBuffer(file);
