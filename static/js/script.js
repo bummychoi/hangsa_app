@@ -708,7 +708,7 @@ function buildInRowsFromExcelBody(headers, body) {
   }));
 }
 
-window.validateInRows =function validateInRows(rows) {
+window.validateInRows = function validateInRows(rows) {
   for (const r of rows) {
     if (!r.lot_no) return false;
     if (!(r.stock_qty > 0)) return false;
@@ -717,7 +717,7 @@ window.validateInRows =function validateInRows(rows) {
 }
 
 // ✅ 서버 저장 (팝업 저장 버튼이 window.opener.saveInBulk(...) 호출)
-window.saveInBulk=async function saveInBulk(rows) {
+window.saveInBulk = async function saveInBulk(rows) {
   if (!rows.length) return alert("업로드할 데이터가 없습니다.");
   if (!validateInRows(rows)) return alert("필수값(LOT/수량 등) 누락이 있습니다.");
   if (!confirm(`${rows.length}건을 저장할까요?`)) return;
@@ -834,4 +834,25 @@ $(document).on("click", "#btnParse_view", function () {
   };
 
   reader.readAsArrayBuffer(file);
+});
+
+
+$(document).on("click", "#in_fileUploadBtn", function () {
+  const input = document.getElementById("bulkFile");
+
+  if (!input.files.length) {
+    alert("엑셀 파일을 선택하세요.");
+    return;
+  }
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/in_up_preview";
+  form.enctype = "multipart/form-data";
+
+  const fileInput = input.cloneNode();
+  form.appendChild(fileInput);
+
+  document.body.appendChild(form);
+  form.submit();
 });

@@ -898,6 +898,36 @@ def out_bulk_save():
         conn.rollback()
         return jsonify({"result": "fail", "msg": str(e)}), 500
 
+
+@app.route("/in_up_preview", methods=["POST"])
+def in_up_preview():
+    file = request.files.get("file")
+    if not file:
+        return "파일 없음", 400
+
+    df = pd.read_excel(file).fillna("")
+    headers = list(df.columns)               # ✅ headers
+    rows = df.values.tolist()                # ✅ rows (2차원 배열)
+
+    # 합계 (컬럼명이 엑셀에 맞게 조정 필요)
+    def to_num(v):
+        try: return float(str(v).replace(",", "").strip())
+        except: return 0.0
+
+    # 예: "재고수량", "재고중량" 같은 실제 컬럼명으로 바꿔야 함
+    total_qty = sum(to_num(r[headers.index("재고수량")]) for r in rows) if "재고수량" in headers else 0
+    total_weight = sum(to_num(r[headers.index("재고중량")]) for r in rows) if "재고중량" in headers else 0
+
+    return render_template(
+    "in_up_preview.html",
+    file_name=file.filename,
+    headers=headers,   # 리스트
+    rows=rows,         # 2차원 리스트
+    total_qty=total_qty,
+    total_weight=total_weight
+)
+
+
 if __name__ == "__main__":
     # print(app.url_map)
     app.run(host="127.0.0.1", port=5000, debug=True)
