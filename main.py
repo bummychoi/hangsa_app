@@ -898,6 +898,16 @@ def out_bulk_save():
         conn.rollback()
         return jsonify({"result": "fail", "msg": str(e)}), 500
 
+
+@app.route("/in_bulk_preview")
+def in_bulk_preview():
+    key = request.args.get("key")
+
+    # ✅ key 없이 들어오면: opener의 localStorage key를 찾을 수 없으니
+    # 그냥 템플릿에서 안내만 하지 말고, "key를 붙여서 다시 열어달라"로 유도
+    return render_template("in_bulk_preview.html")
+
+
 if __name__ == "__main__":
     # print(app.url_map)
     app.run(host="127.0.0.1", port=5000, debug=True)

@@ -560,81 +560,95 @@
     $("#bulkFileName").text(file.name);
   });
 
+  // ✅ 예전 입고업로드 버튼은 이제 미리보기(btnParse_view)로만 동작하게 통일
+  $(document).off("click", "#in_fileUploadBtn");
+
+
   // =======================
   // ✅ 입고업로드 버튼(기존 방식): /in_bulk_preview 라우트 팝업
   // =======================
-  $(document).on("click", "#in_fileUploadBtn", function () {
-    const input = document.getElementById("bulkFile");
+  $(document).on("click", "#in_fileUploadBtn", function (e) {
 
-    if (!input || !input.files || !input.files.length) {
-      alert("엑셀 파일을 먼저 선택하세요.");
-      return;
-    }
-    if (typeof XLSX === "undefined") {
-      alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
-      return;
-    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    // ✅ 미리보기 버튼 로직만 실행 (localStorage + ?key= 방식)
+    $("#btnParse_view").trigger("click");
+    return; // ✅ 이거 꼭!
+    const key = new URLSearchParams(location.search).get("key");
+    console.log("POPUP URL SHOULD BE:", "/in_bulk_preview?key=" + encodeURIComponent(localStorage.key(localStorage.length-1)));
 
-    const file = input.files[0];
-    const reader = new FileReader();
 
-    reader.onload = function (e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    // const input = document.getElementById("bulkFile");
 
-        if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
+    // if (!input || !input.files || !input.files.length) {
+    //   alert("엑셀 파일을 먼저 선택하세요.");
+    //   return;
+    // }
+    // if (typeof XLSX === "undefined") {
+    //   alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
+    //   return;
+    // }
 
-        const headers = Object.keys(body[0] || {});
+    // const file = input.files[0];
+    // const reader = new FileReader();
 
-        // 합계 계산(서버 검증용)
-        const norm = (h) => String(h || "").replace(/\s+/g, "").replace(/\//g, "").toUpperCase();
-        const normHeaders = headers.map(norm);
+    // reader.onload = function (e) {
+    //   try {
+    //     const data = new Uint8Array(e.target.result);
+    //     const wb = XLSX.read(data, { type: "array" });
+    //     const ws = wb.Sheets[wb.SheetNames[0]];
+    //     const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-        const findIdx = (cands) => {
-          for (const c of cands) {
-            const key = norm(c);
-            const idx = normHeaders.indexOf(key);
-            if (idx >= 0) return idx;
-          }
-          return -1;
-        };
+    //     if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
 
-        const idx_qty = findIdx(["재고수량", "수량"]);
-        const idx_wt = findIdx(["재고중량", "중량"]);
+    //     const headers = Object.keys(body[0] || {});
 
-        let totalQty = 0;
-        let totalWeight = 0;
+    //     // 합계 계산(서버 검증용)
+    //     const norm = (h) => String(h || "").replace(/\s+/g, "").replace(/\//g, "").toUpperCase();
+    //     const normHeaders = headers.map(norm);
 
-        body.forEach((obj) => {
-          const arr = headers.map((h) => obj[h]);
-          if (idx_qty >= 0) totalQty += window.toNum(arr[idx_qty]);
-          if (idx_wt >= 0) totalWeight += window.toNum(arr[idx_wt]);
-        });
+    //     const findIdx = (cands) => {
+    //       for (const c of cands) {
+    //         const key = norm(c);
+    //         const idx = normHeaders.indexOf(key);
+    //         if (idx >= 0) return idx;
+    //       }
+    //       return -1;
+    //     };
 
-        totalWeight = Math.round(totalWeight * 1000) / 1000;
+    //     const idx_qty = findIdx(["재고수량", "수량"]);
+    //     const idx_wt = findIdx(["재고중량", "중량"]);
 
-        window.__bulkPreview = { headers, body, totalQty, totalWeight };
+    //     let totalQty = 0;
+    //     let totalWeight = 0;
 
-        const w = 1100,
-          h = 900;
-        const left = Math.floor((window.screen.width - w) / 2);
-        const top = Math.floor((window.screen.height - h) / 2);
+    //     body.forEach((obj) => {
+    //       const arr = headers.map((h) => obj[h]);
+    //       if (idx_qty >= 0) totalQty += window.toNum(arr[idx_qty]);
+    //       if (idx_wt >= 0) totalWeight += window.toNum(arr[idx_wt]);
+    //     });
 
-        window.open(
-          "/in_bulk_preview",
-          "bulkResult",
-          `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
-        );
-      } catch (err) {
-        console.error(err);
-        alert("엑셀 파싱 실패: " + err.message);
-      }
-    };
+    //     totalWeight = Math.round(totalWeight * 1000) / 1000;
 
-    reader.readAsArrayBuffer(file);
+    //     window.__bulkPreview = { headers, body, totalQty, totalWeight };
+
+    //     const w = 1100,
+    //       h = 900;
+    //     const left = Math.floor((window.screen.width - w) / 2);
+    //     const top = Math.floor((window.screen.height - h) / 2);
+
+    //     window.open(
+    //       "/in_bulk_preview",
+    //       "bulkResult",
+    //       `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    //     );
+    //   } catch (err) {
+    //     console.error(err);
+    //     alert("엑셀 파싱 실패: " + err.message);
+    //   }
+    // };
+
+    // reader.readAsArrayBuffer(file);
   });
 
   // =======================
@@ -708,7 +722,7 @@ function buildInRowsFromExcelBody(headers, body) {
   }));
 }
 
-window.validateInRows =function validateInRows(rows) {
+window.validateInRows = function validateInRows(rows) {
   for (const r of rows) {
     if (!r.lot_no) return false;
     if (!(r.stock_qty > 0)) return false;
@@ -717,7 +731,7 @@ window.validateInRows =function validateInRows(rows) {
 }
 
 // ✅ 서버 저장 (팝업 저장 버튼이 window.opener.saveInBulk(...) 호출)
-window.saveInBulk=async function saveInBulk(rows) {
+window.saveInBulk = async function saveInBulk(rows) {
   if (!rows.length) return alert("업로드할 데이터가 없습니다.");
   if (!validateInRows(rows)) return alert("필수값(LOT/수량 등) 누락이 있습니다.");
   if (!confirm(`${rows.length}건을 저장할까요?`)) return;
@@ -736,18 +750,17 @@ window.saveInBulk=async function saveInBulk(rows) {
     alert("저장 실패: " + (data.msg || "서버 오류"));
   }
 }
+// ✅ 기존에 혹시 등록돼있는 btnParse_view 클릭 이벤트 싹 제거
+$(document).off("click", "#btnParse_view");
 
-// ✅ “미리보기” 버튼: 팝업에 테이블 그리고 저장 버튼 제공
-$(document).on("click", "#btnParse_view", function () {
+$(document).on("click", "#btnParse_view", function (e) {
+
+  e.preventDefault();
+  e.stopImmediatePropagation(); // ⭐ 중복 실행 완전 차단
+
   const input = document.getElementById("bulkFile");
-  if (!input || !input.files || !input.files.length) {
-    alert("엑셀 파일을 먼저 선택하세요.");
-    return;
-  }
-  if (typeof XLSX === "undefined") {
-    alert("XLSX 라이브러리가 없습니다.");
-    return;
-  }
+  if (!input?.files?.length) return alert("엑셀 파일을 먼저 선택하세요.");
+  if (typeof XLSX === "undefined") return alert("XLSX 라이브러리가 없습니다.");
 
   const file = input.files[0];
   const reader = new FileReader();
@@ -758,78 +771,45 @@ $(document).on("click", "#btnParse_view", function () {
       const wb = XLSX.read(data, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
-
       if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
 
       const headers = Object.keys(body[0] || {});
       const rows = buildInRowsFromExcelBody(headers, body);
 
-      let totalQty = 0,
-        totalWeight = 0;
+      let totalQty = 0, totalWeight = 0;
       rows.forEach((r) => {
         totalQty += Number(r.stock_qty || 0);
         totalWeight += Number(r.stock_wt || 0);
       });
+      totalWeight = Number(totalWeight.toFixed(3));
 
-      window.__IN_ROWS = rows;
+      // ✅ 팝업 전달용 payload
+      const payload = {
+        filename: file.name,
+        totalQty,
+        totalWeight,
+        rows, // 정규화 rows 그대로
+      };
 
-      const pop = window.open("", "bulkResult", "width=1100,height=900,scrollbars=yes,resizable=yes");
+      // ✅ localStorage에 저장 (키를 쿼리로 전달)
+      const key = "IN_PREVIEW_" + Date.now();
+      localStorage.setItem(key, JSON.stringify(payload));
+
+      // ✅ 1) 팝업 먼저 열기 (재사용 팝업이어도 무조건 잡힘)
+      const pop = window.open(
+        "about:blank",
+        "inBulkPreview",
+        "width=1100,height=900,scrollbars=yes,resizable=yes"
+      );
       if (!pop) return alert("팝업이 차단되었습니다.");
 
-      pop.document.open();
-      pop.document.write(`
-        <!doctype html>
-        <html><head><meta charset="utf-8"><title>엑셀 미리보기</title>
-        <style>
-          body{font-family:Arial;padding:16px}
-          table{border-collapse:collapse;width:100%}
-          th,td{border:1px solid #ccc;padding:6px;font-size:12px}
-          th{background:#f3f3f3;position:sticky;top:0}
-          .bar{display:flex;gap:8px;align-items:center;margin:10px 0}
-          .bar button{padding:8px 12px}
-        </style>
-        </head><body>
-          <h2>엑셀 미리보기</h2>
-          <div>
-            총건수: <b>${rows.length}</b> /
-            수량합계: <b>${totalQty.toLocaleString()}</b> /
-            중량합계: <b>${totalWeight.toLocaleString()}</b>
-          </div>
+      // ✅ 2) 그 다음 URL 강제 이동 (여기서 100% ?key= 붙음)
+      pop.location.href = "/in_bulk_preview?key=" + encodeURIComponent(key);
+      pop.focus();
 
-          <div class="bar">
-            <button onclick="window.opener.saveInBulk(window.opener.__IN_ROWS)">서버저장(JSON)</button>
-            <button onclick="window.close()">닫기</button>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>LOT</th><th>화주</th><th>품목</th><th>규격</th>
-                <th>단위중량</th><th>수량</th><th>중량</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.slice(0, 500).map(r => `
-                <tr>
-                  <td>${window.opener.escapeHtml(r.lot_no)}</td>
-                  <td>${window.opener.escapeHtml(r.owner_name)}</td>
-                  <td>${window.opener.escapeHtml(r.cargo_type)}</td>
-                  <td>${window.opener.escapeHtml(r.size)}</td>
-                  <td style="text-align:right">${r.unit_wt}</td>
-                  <td style="text-align:right">${r.stock_qty}</td>
-                  <td style="text-align:right">${r.stock_wt}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-
-          <p style="color:#666">※ 화면에는 500건까지만 표시(저장은 전체 저장)</p>
-        </body></html>
-      `);
-      pop.document.close();
     } catch (err) {
       console.error(err);
-      alert("엑셀 파싱 실패: " + err.message);
+      alert("엑셀 파싱 실패: " + (err?.message || err));
     }
   };
 
