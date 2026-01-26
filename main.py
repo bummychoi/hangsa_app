@@ -926,6 +926,25 @@ def in_up_preview():
     total_qty=total_qty,
     total_weight=total_weight
 )
+@app.route("/customs")
+def customs():
+    sql = """
+        SELECT
+            cargo_no AS cargo_no,
+            MAX(vessel_name) AS vessel_name,
+            MAX(bl_no) AS bl_no,
+            SUM(bundle_qty) AS total_qty,
+            SUM(mt_weight) AS total_weight
+        FROM in_d_bar
+        WHERE cargo_no IS NOT NULL AND TRIM(cargo_no) <> ''
+        GROUP BY cargo_no
+        ORDER BY cargo_no
+    """
+    with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+
+    return render_template("customs.html", rows=rows)
 
 
 if __name__ == "__main__":

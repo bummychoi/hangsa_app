@@ -1,0 +1,38 @@
+{% extends "main.html" %}
+
+{% block contents %}
+<script src="/static/js/customs_btn.js"></script>
+<h1>세관조회</h1>
+<table border="1">
+    <thead>
+        <tr>
+            <th>순번</th>
+            <!-- <th>LOT</th> -->
+            <th>선명</th>
+            <th>화물관리번호</th>
+            <th>BL</th>
+            <th>수량</th>
+            <th>중량</th>
+            <th>통관합계</th>
+            <th>출고수량</th>
+            <th>통관진행</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.vessel_name }}</td>
+            <td class="cargo-no">{{ r.cargo_no }}</td>
+            <td>{{ r.bl_no }}</td>
+            <td>{{ r.total_qty }}</td>
+            <td>{{ "%.3f"|format(r.total_weight or 0) }}</td>
+            <td>{{ r.total_qty }}</td> {# 통관합계는 일단 수량합으로 표시 #}
+            <td>0</td> {# 출고수량은 나중에 조인 #}
+            <td></td> {# 통관진행은 나중에 저장/조회 #}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
