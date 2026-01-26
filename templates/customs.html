@@ -2,7 +2,12 @@
 
 {% block contents %}
 <script src="/static/js/customs_btn.js"></script>
+<link href="/static/css/customs.css" rel="stylesheet">
 <h1>세관조회</h1>
+<div class="customs-actions">
+    <button type="button" id="btnCrawl">미통관/부분통관 갱신</button>
+    <button type="button" id="btnReload" onclick="location.reload()">새로고침</button>
+</div>
 <table border="1">
     <thead>
         <tr>
@@ -25,11 +30,26 @@
             <td>{{ r.vessel_name }}</td>
             <td class="cargo-no">{{ r.cargo_no }}</td>
             <td>{{ r.bl_no }}</td>
-            <td>{{ r.total_qty }}</td>
-            <td>{{ "%.3f"|format(r.total_weight or 0) }}</td>
-            <td>{{ r.total_qty }}</td> {# 통관합계는 일단 수량합으로 표시 #}
-            <td>0</td> {# 출고수량은 나중에 조인 #}
-            <td></td> {# 통관진행은 나중에 저장/조회 #}
+
+            <!-- 수량 -->
+            <td>{{ r.total_in_qty }}</td>
+
+            <!-- 중량 -->
+            <td>{{ "%.3f"|format(r.total_in_weight or 0) }}</td>
+
+            <!-- 통관합계 = 수량합  클롤링 해서 통관수량 나옴-->
+            <!-- <td>{{ r.total_in_qty }}</td> -->
+            <td>작업중</td>
+            <!-- 출고수량 -->
+            <td>{{ r.total_out_qty }}</td>
+            <td class="customs-td">
+                <select class="customs-status" data-cargo="{{ r.cargo_no }}">
+                    <option value="" {% if r.customs_status=='' %}selected{% endif %}>--선택--</option>
+                    <option value="미통관" {% if r.customs_status=='미통관' %}selected{% endif %}>미통관</option>
+                    <option value="부분통관" {% if r.customs_status=='부분통관' %}selected{% endif %}>부분통관</option>
+                    <option value="통관" {% if r.customs_status=='통관' %}selected{% endif %}>통관</option>
+                </select>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

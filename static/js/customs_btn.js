@@ -18,3 +18,31 @@ document.addEventListener("dblclick", function (e) {
 
   window.open(url, "_blank", "noopener,noreferrer");
 });
+
+
+function applyStatusStyle(sel){
+  const v = (sel.value || "").trim();
+
+  sel.style.color = "#fff";
+
+  if (v === "미통관") {
+    sel.style.background = "#e11d48"; // 빨강
+  } else if (v === "부분통관") {
+    sel.style.background = "#f59e0b"; // 노랑(글자 흰색)
+  } else if (v === "통관") {
+    sel.style.background = "#2563eb"; // 파랑
+  } else {
+    sel.style.background = "";
+    sel.style.color = "";
+  }
+}
+
+document.addEventListener("change", function(e){
+  const sel = e.target.closest(".customs-status");
+  if(!sel) return;
+  applyStatusStyle(sel);
+});
+
+window.addEventListener("DOMContentLoaded", function(){
+  document.querySelectorAll(".customs-status").forEach(applyStatusStyle);
+});
