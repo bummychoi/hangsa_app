@@ -4,7 +4,25 @@ import pymysql
 import pandas as pd
 import re
 
+import subprocess
+import time
+import webbrowser
+
+
 from decimal import Decimal, InvalidOperation
+
+
+
+def ensure_mysql_service(service_name="MySQL80"):
+    try:
+        q = subprocess.run(["sc", "query", service_name], capture_output=True, text=True)
+        if "RUNNING" in q.stdout:
+            return True
+
+        subprocess.run(["sc", "start", service_name], capture_output=True, text=True)
+        time.sleep(2)
+    except Exception:
+        pass
 
 app = Flask(__name__)
 conn = pymysql.connect(
@@ -1042,15 +1060,15 @@ def customs():
 
     return render_template("customs.html", rows=rows)
 
->>>>>>> restore-inbound
 
 
-if __name__ == "__main__":
-    # print(app.url_map)
-    app.run(host="127.0.0.1", port=5000, debug=True)
 
 # if __name__ == "__main__":
-#     import webbrowser
-#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-#     app.run(host="127.0.0.1", port=8000)
+#     # print(app.url_map)
+#     app.run(host="127.0.0.1", port=5000, debug=True)
+
+if __name__ == "__main__":
+    import webbrowser
+    webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
+    app.run(host="127.0.0.1", port=8000)
 
