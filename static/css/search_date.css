@@ -1,0 +1,111 @@
+.search_bar{
+  background:#c9f8f7 !important;;
+  padding: 14px 18px;
+  border-bottom: 2px solid rgba(0,0,0,.18);
+}
+
+/* 검색+합계 한 줄 정렬 */
+.search_row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+/* 기존 검색폼 */
+.search_form{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.search_label{
+  font-weight: 900;
+  font-size: 16px;
+  color:#083d4a;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(0,0,0,.12);
+}
+
+.search_form input[type="date"]{
+  height: 42px;
+  padding: 0 14px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(0,0,0,.22);
+  background:#fff;
+  font-weight: 800;
+  min-width: 220px;
+}
+
+.btn_search{
+  height: 42px;
+  padding: 0 22px;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 12px;
+  border: none;
+  background:#0b8ddf;
+  color:#fff;
+  cursor:pointer;
+}
+
+.btn_search:active{ transform: scale(.97); }
+
+/* ✅ 합계 박스 */
+.sum_box{
+  list-style:none;
+  margin:0;
+  padding: 10px 14px;
+  display:flex;
+  gap: 14px;
+  align-items:center;
+  border-radius: 14px;
+  background: rgba(255,255,255,.75);
+  border: 1px solid rgba(0,0,0,.12);
+}
+
+.sum_box li{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  font-weight: 900;
+  color:#083d4a;
+}
+
+.sum_label{
+  font-size: 14px;
+  opacity: .85;
+}
+
+.sum_val{
+  font-size: 18px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background:#ffffff;
+  border: 1px solid rgba(0,0,0,.12);
+  min-width: 70px;
+  text-align:right;
+}
+
+
+th {
+  cursor: pointer;
+  position: relative;
+}
+
+th::after {
+  content: "";
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.sort-up {
+  color: blue;
+}
+
+.sort-down {
+  color: red;
+}

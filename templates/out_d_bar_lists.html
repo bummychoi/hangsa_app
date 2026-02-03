@@ -9,7 +9,7 @@
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
     <script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/search_date.css') }}?v=2">
     <title>출고조회</title>
 </head>
 
@@ -21,11 +21,30 @@
 
         <div class="out_list_controls">
             <input class="out_list_date" id="datePicker" type="date" value="{{ date_str }}">
+            <ul class="sum_box">
+                <li>
+                    <span class="sum_label" style="color: blue;">수량합계</span>
+                    <span class="sum_val" style="color: blue;">{{ "{:,}".format(day_total_qty or 0) }}</span>
+                </li>
+                <li>
+                    <span class="sum_label" style="color: blue;">중량합계</span>
+                    <span class="sum_val" style="color: blue;">{{ "{:,.3f}".format(day_total_wt or 0) }}</span>
+                </li>
 
+                <li>
+                    <span class="sum_label">미출고 수량</span>
+                    <span class="sum_val">{{ "{:,}".format(pending_total_qty or 0) }}</span>
+                </li>
+                <li>
+                    <span class="sum_label">미출고 중량</span>
+                    <span class="sum_val">{{ "{:,.3f}".format(pending_total_wt or 0) }}</span>
+                </li>
+            </ul>
             <ul>
                 <li><button type="button" class="out_btns goday" onclick="goDate()">조회</button></li>
                 <li><button type="button" class="out_btns gray" onclick="window.close()">닫기</button></li>
             </ul>
+
         </div>
     </div>
 

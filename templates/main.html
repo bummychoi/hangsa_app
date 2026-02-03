@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
+    <!-- ✅ 여기 추가 -->
+    {% block head %}{% endblock %}
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -60,7 +61,7 @@
                 <h2><img src="/static/img/mulryuda_logo.png" alt="logo"></h2>
             </div>
             <div class="copy">
-                Copyright &copy; DOUZONE BIZON. All rights reserved
+                &copy; 2026 Bummy. All rights reserved.
             </div>
             <div class="sns">
                 sns

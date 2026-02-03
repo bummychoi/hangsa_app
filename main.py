@@ -61,6 +61,8 @@ with conn.cursor() as cur:
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
 @app.route("/list")
 def in_list():
     try:
@@ -69,31 +71,82 @@ def in_list():
         print("🔥 /list 오류:", e)
         return jsonify({"error": str(e)}), 500
     try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM in_d_bar ORDER BY date_at DESC;')
-            contents = cur.fetchall()
-            rows=[{"lot_no":row[0],
-                    "vessel_name":row[1],
-                    "owner_name":row[2],
-                    "cargo_no":row[3],
-                    "bl_no" :row[4],
-                    "maker":row[5],
-                    "cargo_type":row[6],
-                    "steel_type":row[7],
-                    "size":row[8],
-                    "bundle_qty":row[9],
-                    "mt_weight":row[10],
-                    "unit_wt": row[11],        # (선택)
-                    "date_at": row[12]        # ✅ 저장시간
-                    } for row in contents]
+        all_flag = request.args.get("all", "").strip()  # '1'이면 전체조회
+        search_date = (request.args.get("search_date") or "").strip()
+        sql = "SELECT * FROM in_d_bar WHERE 1=1"
+        params = []
 
-            # print(rows)
-            return render_template("in_list.html", rows=rows)
+
+        # --- 합계 SQL (같은 조건으로 맞출 것) ---
+        sum_sql = """
+            SELECT
+                IFNULL(SUM(bundle_qty), 0) AS total_bundle,
+                IFNULL(SUM(mt_weight), 0) AS total_weight
+            FROM in_d_bar
+            WHERE 1=1
+        """
+        sum_params = []
+
+        # ✅ 전체조회가 아니면: 기본 '오늘' 적용
+        if all_flag != "1":
+            if search_date:
+                # 입력된 YYYY-MM-DD → YYMMDD 변환
+                yymmdd = datetime.strptime(search_date, "%Y-%m-%d").strftime("%y%m%d")
+            else:
+                # 기본 오늘 날짜
+                yymmdd = datetime.now().strftime("%y%m%d")
+                search_date = datetime.now().strftime("%Y-%m-%d")
+
+
+            # lot_no 앞 6자리 기준 검색
+            sql += " AND lot_no LIKE %s"
+            params.append(yymmdd + "%")
+
+            sum_sql += " AND lot_no LIKE %s"
+            sum_params.append(yymmdd + "%")
+
+        else:
+            search_date = ""
+
+        sql += " ORDER BY lot_no DESC"
+
+        with conn.cursor() as cur:
+            # 목록
+            cur.execute(sql, params)
+            contents = cur.fetchall()
+
+            # 합계
+            cur.execute(sum_sql, sum_params)
+            total_bundle, total_weight = cur.fetchone()
+
+        rows = [{
+            "lot_no": row[0],
+            "vessel_name": row[1],
+            "owner_name": row[2],
+            "cargo_no": row[3],
+            "bl_no": row[4],
+            "maker": row[5],
+            "cargo_type": row[6],
+            "steel_type": row[7],
+            "size": row[8],
+            "bundle_qty": row[9],
+            "mt_weight": row[10],
+            "unit_wt": row[11],
+            "date_at": row[12]
+        } for row in contents]
+
+        return render_template(
+            "in_list.html",
+            rows=rows,
+            search_date=search_date,
+            all_flag=all_flag,
+            total_bundle=total_bundle,
+            total_weight=total_weight
+        )
 
     except Exception as e:
         print("🔥 /list 실행 오류:", e)
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/in_d_bar")
 def in_d_bar():
@@ -719,13 +772,29 @@ def out_d_bar_lists():
         # ✅ 기존 템플릿(rows) 호환
         rows = pending_rows + day_rows
 
+        # ✅ 합계(전체 / pending / day)
+        total_qty = sum(r["out_qty"] for r in rows)
+        total_wt  = sum(r["out_wt"]  for r in rows)
+
+        pending_total_qty = sum(r["out_qty"] for r in pending_rows)
+        pending_total_wt  = sum(r["out_wt"]  for r in pending_rows)
+
+        day_total_qty = sum(r["out_qty"] for r in day_rows)
+        day_total_wt  = sum(r["out_wt"]  for r in day_rows)
         return render_template(
             "out_d_bar_lists.html",
             date_str=date_str,
             date_kr=date_kr,
             rows=rows,
             pending_rows=pending_rows,
-            day_rows=day_rows
+            day_rows=day_rows,
+
+            total_qty=total_qty,
+            total_wt=total_wt,
+            pending_total_qty=pending_total_qty,
+            pending_total_wt=pending_total_wt,
+            day_total_qty=day_total_qty,
+            day_total_wt=day_total_wt
         )
     finally:
         conn.close()
