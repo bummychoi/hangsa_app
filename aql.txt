@@ -55,3 +55,12 @@ CREATE TABLE out_d_bar (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
 
+
+
+1당 중량
+UPDATE in_d_bar
+SET unit_wt =
+    CASE
+        WHEN bundle_qty > 0 THEN ROUND(mt_weight / bundle_qty, 3)
+        ELSE 0
+    END;

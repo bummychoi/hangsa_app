@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>엑셀 미리보기</title>
+    <style>
+        :root {
+            --bg: #f7f8fa;
+            --card: #fff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --blue: #1f5eff;
+            --gray: #6b7280;
+            --red: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 6px 0 10px;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+            padding: 14px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .pill {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            background: #f3f4f6;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .pill b {
+            font-size: 14px;
+        }
+
+        .btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.primary {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff
+        }
+
+        .btn.gray {
+            background: var(--gray);
+            border-color: var(--gray);
+            color: #fff
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        .table-wrap {
+            margin-top: 14px;
+            overflow: auto;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: #fff;
+            max-height: 70vh;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--line);
+            padding: 8px 10px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: #f9fafb;
+            z-index: 2;
+            font-weight: 800
+        }
+
+        tr:hover td {
+            background: #f8fafc
+        }
+
+        .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+
+        .footer-note {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            background: #111827;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="title">엑셀 미리보기</div>
+        <div class="sub">
+            {% if file_name %}파일: <b>{{ file_name }}</b>{% endif %}
+            {% if rows %}&nbsp;·&nbsp; 총 <b>{{ rows|length }}</b>건{% endif %}
+        </div>
+
+        <div class="card">
+            <div class="row">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <div class="pill">총건수 <b>{{ rows|length }}</b></div>
+                    <div class="pill">수량합계 <b class="num">{{ total_qty }}</b></div>
+                    <div class="pill">중량합계 <b class="num">{{ total_weight }}</b></div>
+                </div>
+
+                <div class="btns">
+                    <button class="btn gray" type="button" onclick="window.close()">취소(닫기)</button>
+                    <button class="btn primary" type="button" id="btnSave">파일업로드(서버저장)</button>
+                </div>
+            </div>
+
+            <div class="footer-note">
+                ※ 저장 버튼을 누르면 서버가 다시 합계 검증 후 DB 저장합니다. (합계 불일치 시 저장 차단)
+            </div>
+
+            <div class="table-wrap">
+                {% if not rows or rows|length == 0 %}
+                <div style="padding:18px;">표시할 데이터가 없습니다.</div>
+                {% else %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>순번</th>
+                            {# ✅ rows는 2차원 배열이므로 headers로 헤더 출력 #}
+                            {% for h in headers %}
+                            <th>{{ h }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rows %}
+                        <tr>
+                            <td class="num">{{ loop.index }}</td>
+                            {# ✅ r도 list이므로 values()가 아니라 그대로 반복 #}
+                            {% for v in r %}
+                            <td>{{ v }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ✅ Undefined 방지(안전 기본값)
+        const HEADERS = {{ (headers or[]) | tojson }};
+        const ROWS = {{ (rows or[]) | tojson }};
+        const totalQty = {{ (total_qty or 0) | tojson }};
+        const totalWeight = {{ (total_weight or 0) | tojson }};
+
+        const btnSave = document.getElementById("btnSave");
+        const toast = document.getElementById("toast");
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.display = "block";
+            setTimeout(() => toast.style.display = "none", 1800);
+        }
+
+        btnSave?.addEventListener("click", async () => {
+            if (!ROWS || !ROWS.length) { alert("저장할 데이터가 없습니다."); return; }
+            if (!confirm("이 내용으로 DB에 저장할까요?")) return;
+
+            btnSave.disabled = true;
+            showToast("서버 저장 중...");
+
+            try {
+                const res = await fetch("/in_bulk_upload_json", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        headers: HEADERS,
+                        rows: ROWS,
+                        totalQty: totalQty,
+                        totalWeight: totalWeight
+                    })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && data.result === "ok") {
+                    alert(`저장 완료: ${data.inserted}건`);
+                    if (window.opener) window.opener.location.href = "/list";
+                    window.close();
+                } else {
+                    alert(`저장 실패: ${data.msg || "unknown"}\n(서버Qty:${data.serverQty ?? "-"}, 서버Wt:${data.serverWt ?? "-"})`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("저장 중 오류가 발생했습니다.");
+            } finally {
+                btnSave.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

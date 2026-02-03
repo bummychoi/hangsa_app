@@ -1,0 +1,107 @@
+@charset "utf-8";
+
+/* 통관진행 td */
+.customs-td {
+    padding: 0;
+    /* 셀 여백 제거 */
+}
+
+/* select를 td 전체 채우기 */
+.customs-status {
+    width: 100%;
+    height: 100%;
+    min-height: 32px;
+    /* 행 높이 보장 */
+    border: none;
+    outline: none;
+
+    text-align: center;
+    text-align-last: center;
+    /* option 중앙정렬 (중요) */
+
+    font-weight: 700;
+    font-size: 13px;
+
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+/* 통관진행 셀 자체 */
+td.customs-cell {
+    padding: 0;
+    /* 꽉 차게 */
+}
+
+td.customs-cell select.customs-status {
+    width: 100%;
+    height: 100%;
+    min-height: 34px;
+    box-sizing: border-box;
+    border: 0;
+    outline: none;
+    text-align: center;
+    text-align-last: center;
+    font-weight: 800;
+
+    font-size: 30px;
+    /* ✅ 여기 하나만 */
+    line-height: 1;
+    padding: 6px 28px 6px 10px;
+    cursor: pointer;
+}
+
+td.customs-cell select.customs-status option {
+    font-size: 22px;
+    /* ✅ 옵션도 하나만 */
+}
+
+td.customs-cell select.customs-status {
+    font-size: 25px;
+    /* ← 기존 16px 이었다면 18~20px 추천 */
+    font-weight: 800;
+    /* 이미 있으면 유지 */
+}
+
+td.customs-cell select.customs-status option {
+    font-size: 18px;
+}
+
+
+.customs-status.st-red {
+    background: #e11d48;
+    color: #fff;
+}
+
+.customs-status.st-yellow {
+    background: #f59e0b;
+    color: #111;
+}
+
+.customs-status.st-blue {
+    background: #2563eb;
+    color: #fff;
+}
+
+
+.customs-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 6px 0 10px;
+}
+
+.customs-actions button {
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 700;
+    border: 1px solid #333;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 15px;
+}
+
+.customs-actions button:hover {
+    filter: brightness(0.95);
+    background: #2563eb;
+    color: white;
+}

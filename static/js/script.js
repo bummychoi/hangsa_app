@@ -815,3 +815,24 @@ $(document).on("click", "#btnParse_view", function (e) {
 
   reader.readAsArrayBuffer(file);
 });
+
+
+$(document).on("click", "#in_fileUploadBtn", function () {
+  const input = document.getElementById("bulkFile");
+
+  if (!input.files.length) {
+    alert("엑셀 파일을 선택하세요.");
+    return;
+  }
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/in_up_preview";
+  form.enctype = "multipart/form-data";
+
+  const fileInput = input.cloneNode();
+  form.appendChild(fileInput);
+
+  document.body.appendChild(form);
+  form.submit();
+});
