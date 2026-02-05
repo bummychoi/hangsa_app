@@ -40,20 +40,32 @@ conn.select_db("hangsa")
 
 # 테이블 생성
 with conn.cursor() as cur:
-    cur.execute("CREATE TABLE IF NOT EXISTS in_d_bar (\
-                    lot_no VARCHAR(20) PRIMARY KEY ,\
-                    vessel_name VARCHAR(30) NOT NULL,\
-                    owner_name VARCHAR(30) NOT NULL,\
-                    cargo_no VARCHAR(20),\
-                    bl_no VARCHAR(20) NOT NULL,\
-                    maker VARCHAR(20) NOT NULL,\
-                    cargo_type VARCHAR(20),\
-                    steel_type VARCHAR(20),\
-                    size VARCHAR(20),\
-                    bundle_qty DECIMAL(10,1) NOT NULL DEFAULT 0.0,\
-                    mt_weight decimal(10,3),\
-                    date_at DATETIME DEFAULT CURRENT_TIMESTAMP\
-                    );")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS in_d_bar (
+            lot_no VARCHAR(20) PRIMARY KEY,
+            vessel_name VARCHAR(30) NOT NULL,
+            owner_name VARCHAR(30) NOT NULL,
+            cargo_no VARCHAR(20),
+            bl_no VARCHAR(20) NOT NULL,
+            maker VARCHAR(20) NOT NULL,
+            cargo_type VARCHAR(20),
+            steel_type VARCHAR(20),
+            size VARCHAR(20),
+            bundle_qty DECIMAL(10,1) NOT NULL DEFAULT 0.0,
+            mt_weight DECIMAL(10,3) DEFAULT 0.000,
+
+            unit_wt DECIMAL(12,6)
+            GENERATED ALWAYS AS (
+                CASE 
+                    WHEN bundle_qty > 0 
+                    THEN mt_weight / bundle_qty
+                    ELSE 0
+                END
+            ) STORED,
+
+            date_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
 # 출고테이블 생성 (DB 수정본 반영)
 with conn.cursor() as cur:
     cur.execute("""
@@ -1062,12 +1074,12 @@ def customs():
 
 
 
-if __name__ == "__main__":
-    # print(app.url_map)
-    app.run(host="127.0.0.1", port=5000, debug=True)
-
 # if __name__ == "__main__":
-#     import webbrowser
-#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-#     app.run(host="127.0.0.1", port=8000)
+#     # print(app.url_map)
+#     app.run(host="127.0.0.1", port=5000, debug=True)
+
+if __name__ == "__main__":
+    import webbrowser
+    webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
+    app.run(host="127.0.0.1", port=8000)
 
