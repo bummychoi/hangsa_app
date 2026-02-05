@@ -112,8 +112,8 @@ def in_list():
                 yymmdd = datetime.strptime(search_date, "%Y-%m-%d").strftime("%y%m%d")
             else:
                 # 기본 오늘 날짜
-                yymmdd = datetime.now().strftime("%y%m%d")
                 search_date = datetime.now().strftime("%Y-%m-%d")
+                yymmdd = datetime.now().strftime("%y%m%d")
 
 
             # lot_no 앞 6자리 기준 검색
@@ -909,11 +909,10 @@ def out_delete_by_outno():
 
 
 
-
-
 @app.route("/out_bulk_form", methods=["GET"])
 def out_bulk_form():
-    return render_template("out_bulk_form.html")
+    today = datetime.now().strftime("%Y-%m-%d")
+    return render_template("out_bulk_form.html", date=today)
 
 def _clean(v):
     return (str(v).strip() if v is not None else "")
@@ -1063,12 +1062,12 @@ def customs():
 
 
 
-# if __name__ == "__main__":
-#     # print(app.url_map)
-#     app.run(host="127.0.0.1", port=5000, debug=True)
-
 if __name__ == "__main__":
-    import webbrowser
-    webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-    app.run(host="127.0.0.1", port=8000)
+    # print(app.url_map)
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
+# if __name__ == "__main__":
+#     import webbrowser
+#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
+#     app.run(host="127.0.0.1", port=8000)
 

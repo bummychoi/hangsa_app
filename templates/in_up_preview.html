@@ -165,6 +165,14 @@
             display: none
         }
     </style>
+    <script id="preview-data" type="application/json">
+        {{ {
+        "headers": headers or [],
+        "rows": rows or [],
+        "totalQty": total_qty or 0,
+        "totalWeight": total_weight or 0
+        } | tojson }}
+    </script>
 </head>
 
 <body>
@@ -227,14 +235,16 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ✅ Undefined 방지(안전 기본값)
-        const HEADERS = {{ (headers or[]) | tojson }};
-        const ROWS = {{ (rows or[]) | tojson }};
-        const totalQty = {{ (total_qty or 0) | tojson }};
-        const totalWeight = {{ (total_weight or 0) | tojson }};
+        const payload = JSON.parse(document.getElementById("preview-data").textContent);
+
+        const HEADERS = payload.headers || [];
+        const ROWS = payload.rows || [];
+        const totalQty = payload.totalQty ?? 0;
+        const totalWeight = payload.totalWeight ?? 0;
 
         const btnSave = document.getElementById("btnSave");
         const toast = document.getElementById("toast");
+
         function showToast(msg) {
             toast.textContent = msg;
             toast.style.display = "block";
@@ -255,8 +265,8 @@
                     body: JSON.stringify({
                         headers: HEADERS,
                         rows: ROWS,
-                        totalQty: totalQty,
-                        totalWeight: totalWeight
+                        totalQty,
+                        totalWeight
                     })
                 });
 

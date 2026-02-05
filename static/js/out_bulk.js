@@ -308,7 +308,8 @@
 
 
     // ---------- click ----------
-    $(document).on("click", "#btnParse_view", function (e) {
+
+    $(document).on("click", "#btnParse_view2", function (e) {
         e.preventDefault();
 
         const raw = $("#bulkText").val();
@@ -418,4 +419,7 @@ window.go_save = function (rows) {
             alert("서버 오류");
         });
 };
+
+
+
 

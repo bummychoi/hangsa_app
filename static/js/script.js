@@ -59,6 +59,7 @@
     });
 
     // ✅ 재고 테이블 더블클릭 → 상세 모달
+    $("#stockTable tbody").off("dblclick.stock");
     $("table tbody").on("dblclick", "tr", function () {
       const $td = $(this).children("td");
       window.selectedLot = $td.eq(1).text().trim(); // 순번(0) LOT(1)
@@ -88,8 +89,9 @@
           $("#lotText").text(`${window.selectedLot} 선택`);
         })
         .catch((err) => {
+          
           console.error("fetch error", err);
-          alert("데이터 조회 실패");
+          // alert("데이터 조회 실패");
         });
     });
   });
@@ -560,101 +562,83 @@
     $("#bulkFileName").text(file.name);
   });
 
-  // ✅ 예전 입고업로드 버튼은 이제 미리보기(btnParse_view)로만 동작하게 통일
-  $(document).off("click", "#in_fileUploadBtn");
-
-
-  // =======================
-  // ✅ 입고업로드 버튼(기존 방식): /in_bulk_preview 라우트 팝업
-  // =======================
-  $(document).on("click", "#in_fileUploadBtn", function (e) {
-
+  $(document).off("click.preview", "#text_view");
+  $(document).on("click.preview", "el_view", async function (e) {
     e.preventDefault();
     e.stopImmediatePropagation();
-    // ✅ 미리보기 버튼 로직만 실행 (localStorage + ?key= 방식)
-    $("#btnParse_view").trigger("click");
-    return; // ✅ 이거 꼭!
-    const key = new URLSearchParams(location.search).get("key");
-    console.log("POPUP URL SHOULD BE:", "/in_bulk_preview?key=" + encodeURIComponent(localStorage.key(localStorage.length-1)));
 
+    alert("미리보기"); // ✅ 지금 여기까진 뜨는 상태
 
-    // const input = document.getElementById("bulkFile");
+    const input = document.getElementById("bulkFile");
+    if (!input || !input.files || !input.files.length) {
+      alert("엑셀 파일을 먼저 선택하세요.");
+      return;
+    }
+    if (typeof XLSX === "undefined") {
+      alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
+      return;
+    }
 
-    // if (!input || !input.files || !input.files.length) {
-    //   alert("엑셀 파일을 먼저 선택하세요.");
-    //   return;
-    // }
-    // if (typeof XLSX === "undefined") {
-    //   alert("XLSX 라이브러리가 없습니다. (xlsx.full.min.js 로드 확인)");
-    //   return;
-    // }
+    const file = input.files[0];
+    const reader = new FileReader();
 
-    // const file = input.files[0];
-    // const reader = new FileReader();
+    reader.onload = function (ev) {
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-    // reader.onload = function (e) {
-    //   try {
-    //     const data = new Uint8Array(e.target.result);
-    //     const wb = XLSX.read(data, { type: "array" });
-    //     const ws = wb.Sheets[wb.SheetNames[0]];
-    //     const body = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        if (!body.length) {
+          alert("엑셀 데이터가 비어있습니다.");
+          return;
+        }
 
-    //     if (!body.length) return alert("엑셀 데이터가 비어있습니다.");
+        // ✅ payload 만들기(너가 미리보기에서 기대하는 구조로)
+        const payload = {
+          filename: file.name,
+          rows: body,                 // 일단 raw 그대로 넣고
+          totalQty: 0,
+          totalWeight: 0
+        };
 
-    //     const headers = Object.keys(body[0] || {});
+        // ✅ key 생성 + 저장
+        const key = "bulk:" + Date.now();
+        localStorage.setItem(key, JSON.stringify(payload));
 
-    //     // 합계 계산(서버 검증용)
-    //     const norm = (h) => String(h || "").replace(/\s+/g, "").replace(/\//g, "").toUpperCase();
-    //     const normHeaders = headers.map(norm);
+        // ✅ 팝업 열기(사용자 클릭 이벤트 안에서 열어야 차단 안 됨)
+        const w = 1100, h = 900;
+        const left = Math.floor((screen.width - w) / 2);
+        const top = Math.floor((screen.height - h) / 2);
+        const url = "/in_bulk_preview?key=" + encodeURIComponent(key);
 
-    //     const findIdx = (cands) => {
-    //       for (const c of cands) {
-    //         const key = norm(c);
-    //         const idx = normHeaders.indexOf(key);
-    //         if (idx >= 0) return idx;
-    //       }
-    //       return -1;
-    //     };
+        const pop = window.open(
+          url,
+          "bulkPreview",
+          `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
 
-    //     const idx_qty = findIdx(["재고수량", "수량"]);
-    //     const idx_wt = findIdx(["재고중량", "중량"]);
+        if (!pop) {
+          alert("팝업이 차단됐습니다. 주소창 오른쪽에서 팝업 허용 후 다시 시도하세요.");
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        alert("엑셀 파싱 실패: " + err.message);
+      }
+    };
 
-    //     let totalQty = 0;
-    //     let totalWeight = 0;
-
-    //     body.forEach((obj) => {
-    //       const arr = headers.map((h) => obj[h]);
-    //       if (idx_qty >= 0) totalQty += window.toNum(arr[idx_qty]);
-    //       if (idx_wt >= 0) totalWeight += window.toNum(arr[idx_wt]);
-    //     });
-
-    //     totalWeight = Math.round(totalWeight * 1000) / 1000;
-
-    //     window.__bulkPreview = { headers, body, totalQty, totalWeight };
-
-    //     const w = 1100,
-    //       h = 900;
-    //     const left = Math.floor((window.screen.width - w) / 2);
-    //     const top = Math.floor((window.screen.height - h) / 2);
-
-    //     window.open(
-    //       "/in_bulk_preview",
-    //       "bulkResult",
-    //       `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
-    //     );
-    //   } catch (err) {
-    //     console.error(err);
-    //     alert("엑셀 파싱 실패: " + err.message);
-    //   }
-    // };
-
-    // reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(file);
   });
 
   // =======================
   // out_bulk_form 팝업 열기 버튼
   // =======================
-  $(document).on("click", "#lists_btnOut", function () {
+  $(document).off("click.out", "#lists_btnOut");
+  $(document).on("click.out", "#lists_btnOut", function (e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
     const w = 1200;
     const h = 700;
 
@@ -672,25 +656,25 @@
     const pop = window.open("/out_bulk_form", "outBulk", opt);
     if (pop) pop.focus();
   });
+  // 팝업 안에서 업로드/미리보기 버튼
+  $(document).off("click.out", "#btnParseOut");
+  $(document).on("click.out", "#btnParseOut", function (e) {
+    alert("출고");
+    e.preventDefault();
+    e.stopImmediatePropagation();
 
-  $(document).on("click", "#out_fileUploadBtn", function () {
-    // ✅ 네가 이미 가지고 있는 bulkUploadToServer() 사용
-    if (typeof window.bulkUploadToServer !== "function") {
-      alert("bulkUploadToServer() 함수가 없습니다. out bulk 스크립트 확인!");
-      return;
-    }
-    window.bulkUploadToServer();
-  });
+    const raw = ($("#bulkText").val() || "").trim();
+    const workDate = ($("#work_date").val() || "").trim();
+    if (!raw) return alert("엑셀에서 복사한 내용을 붙여넣어주세요.");
 
-  // work_date 기본값
-  $(function () {
-    if ($("#work_date").length && !$("#work_date").val()) {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      $("#work_date").val(`${y}-${m}-${day}`);
-    }
+    const rows = window.parseOutBulkText(raw);
+    if (!rows.length) return;
+
+    window.__OUT_ROWS = rows;
+
+    const groups = window.buildOutNoGroups(rows);
+    const html = window.renderSingleTable(groups, workDate);
+    window.openPopup(html);
   });
 
   // 차량번호 경고 숨김
