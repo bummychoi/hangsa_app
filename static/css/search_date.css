@@ -1,10 +1,10 @@
+/* ===== 검색바 ===== */
 .search_bar{
-  background:#c9f8f7 !important;;
+  background:#c9f8f7;
   padding: 14px 18px;
   border-bottom: 2px solid rgba(0,0,0,.18);
 }
 
-/* 검색+합계 한 줄 정렬 */
 .search_row{
   display:flex;
   align-items:center;
@@ -12,11 +12,11 @@
   gap: 18px;
 }
 
-/* 기존 검색폼 */
 .search_form{
   display:flex;
   align-items:center;
   gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .search_label{
@@ -27,9 +27,13 @@
   border-radius: 10px;
   background: rgba(255,255,255,.6);
   border: 1px solid rgba(0,0,0,.12);
+  white-space: nowrap;
 }
 
-.search_form input[type="date"]{
+/* ✅ 검색바 안에서만 input/select 적용 (합계 침범 방지) */
+.search_bar .search_form input[type="date"],
+.search_bar .search_form input[type="text"],
+.search_bar .search_form select{
   height: 42px;
   padding: 0 14px;
   font-size: 16px;
@@ -37,10 +41,15 @@
   border: 2px solid rgba(0,0,0,.22);
   background:#fff;
   font-weight: 800;
-  min-width: 220px;
+  box-sizing: border-box;
 }
 
-.btn_search{
+.search_bar #search_date{ min-width: 220px; }
+.search_bar #search_type{ width: 120px; }
+.search_bar #search_keyword{ width: 220px; }
+
+/* 조회 버튼 */
+.search_bar .btn_search{
   height: 42px;
   padding: 0 22px;
   font-size: 16px;
@@ -51,10 +60,23 @@
   color:#fff;
   cursor:pointer;
 }
+.search_bar .btn_search:active{ transform: scale(.97); }
 
-.btn_search:active{ transform: scale(.97); }
+/* 검색 버튼(회색) */
+.search_bar .btn_ghost{
+  height: 42px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 12px;
+  border: 2px solid rgba(0,0,0,.18);
+  background:#e9edf0;
+  color:#083d4a;
+  cursor:pointer;
+}
+.search_bar .btn_ghost:active{ transform: scale(.97); }
 
-/* ✅ 합계 박스 */
+/* ===== 합계 박스(유지) ===== */
 .sum_box{
   list-style:none;
   margin:0;
@@ -86,26 +108,14 @@
   border-radius: 10px;
   background:#ffffff;
   border: 1px solid rgba(0,0,0,.12);
-  min-width: 70px;
+  min-width: 120px;   /* ✅ 숫자 커지면 이 값 늘려 */
   text-align:right;
 }
 
-
-th {
-  cursor: pointer;
-  position: relative;
-}
-
-th::after {
-  content: "";
-  font-size: 12px;
-  margin-left: 6px;
-}
-
-.sort-up {
-  color: blue;
-}
-
-.sort-down {
-  color: red;
+/* ===== 반응형 ===== */
+@media (max-width: 1100px){
+  .search_row{ flex-wrap: wrap; }
+  .sum_box{ width: 100%; justify-content: flex-end; }
+  .search_form{ width: 100%; flex-wrap: wrap; }
+  .search_bar #search_keyword{ width: 100%; }
 }

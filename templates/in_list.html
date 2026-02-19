@@ -24,7 +24,17 @@
     <form method="GET" action="{{ url_for('in_list') }}" class="search_form">
       <label class="search_label">날짜</label>
       <input type="date" id="search_date" name="search_date" value="{{ search_date or '' }}">
-      <button type="submit" class="btn_search">조회</button>
+      <button type="submit" class="btn_search" name="mode" id="btn_query" value="date">조회</button>
+      <select id="search_type" name="search_type">
+        <option value="all" {{ 'selected' if search_type=='all' else '' }}>모두검색</option>
+        <option value="lot_no" {{ 'selected' if search_type=='lot_no' else '' }}>LOT번호</option>
+        <option value="vessel_name" {{ 'selected' if search_type=='vessel_name' else '' }}>모선명</option>
+        <option value="cargo_no" {{ 'selected' if search_type=='cargo_no' else '' }}>화물관리번호</option>
+        <option value="owner_name" {{ 'selected' if search_type=='owner_name' else '' }}>화주명</option>
+      </select>
+      <input type="text" id="search_keyword" name="keyword" value="{{ keyword or '' }}" placeholder="검색어 입력">
+      <button type="submit" class="btn_ghost" name="mode" value="search">검색</button>
+
     </form>
 
     <ul class="sum_box">

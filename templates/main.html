@@ -13,13 +13,12 @@
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}?v=20251222"></script>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-
+    <link rel="icon" href="{{ url_for('static', filename='mul_tab_favicon.ico') }}">
 
     <title>철근메인</title>
     <meta property="og:title" content="물류다">
     <meta property="og:description" content="입·출고 통합 관리 시스템">
-    <meta property="og:image" content="/static/img/mulryuda_thumbnail.png">
+    <meta property="og:image" content="{{ url_for('static', filename='img/mulryuda_thumbnail.png') }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://너사이트주소">
 </head>

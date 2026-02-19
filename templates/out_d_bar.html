@@ -1,5 +1,10 @@
 {% extends "main.html" %}
 
+{% block head %}
+<script src="{{ url_for('static', filename='js/today.js') }}?v=2"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search_date.css') }}?v=2">
+{% endblock %}
+
 {% block contents %}
 
 <ul class="out_btn">
@@ -9,14 +14,46 @@
             출고조회
         </button>
     </li>
-    <li>
-        <button type="button" id="lists_btnOut" class="btn-out">일괄출고</button>
-    </li>
-    <li>
-        <button type="button" id="btnOut" class="btn-out">선택출고</button>
-    </li>
+    <li><button type="button" id="lists_btnOut" class="btn-out">일괄출고</button></li>
+    <li><button type="button" id="btnOut" class="btn-out">선택출고</button></li>
 </ul>
 
+<!-- ✅ 검색바 (테이블 밖) -->
+<div class="search_bar">
+    <div class="search_row">
+        <form method="GET" action="{{ url_for('out_d_bar_lists') }}" class="search_form">
+            <select id="search_type">
+                <option value="all">모두검색</option>
+                <option value="lot_no">LOT번호</option>
+                <option value="owner_name">화주명</option>
+                <option value="steel_type">강종</option>
+                <option value="size">사이즈</option>
+                <option value="maker">제강사</option>
+            </select>
+
+            <input type="text" id="search_keyword" name="keyword" value="{{ keyword or '' }}" placeholder="검색어 입력">
+
+            <button type="button" class="btn_ghost" id="btn_filter">검색</button>
+            <button type="button" class="btn_ghost" id="btn_clear">초기화</button>
+        </form>
+
+        {# ✅ 합계 계산 (테이블 밖에서 계산/표시) #}
+        {% set ns = namespace(total_in=0, total_out=0, total_stock=0) %}
+        {% for r in rows %}
+        {% set ns.total_in = ns.total_in + (r.in_qty or 0) %}
+        {% set ns.total_out = ns.total_out + (r.out_sum or 0) %}
+        {% set ns.total_stock = ns.total_stock + (r.stock_qty or 0) %}
+        {% endfor %}
+
+        <div class="summary-bar">
+            <span class="sum-item">입고합계 <b>{{ "{:,.1f}".format(ns.total_in) }}</b></span>
+            <span class="sum-item">출고합계 <b>{{ "{:,.1f}".format(ns.total_out) }}</b></span>
+            <span class="sum-item sum-strong">재고합계 <b>{{ "{:,.1f}".format(ns.total_stock) }}</b></span>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 테이블 -->
 <table class="out-table" border="1">
     <thead>
         <tr>
@@ -32,43 +69,23 @@
             <th>최종출고일</th>
         </tr>
     </thead>
-    {# ✅ 합계 계산 (Jinja에서 가장 안전한 방식) #}
-    {% set ns = namespace(total_in=0, total_out=0, total_stock=0) %}
 
-    {% for r in rows %}
-    {% set ns.total_in = ns.total_in + (r.in_qty or 0) %}
-    {% set ns.total_out = ns.total_out + (r.out_sum or 0) %}
-    {% set ns.total_stock = ns.total_stock + (r.stock_qty or 0) %}
-    {% endfor %}
-    <div class="summary-bar">
-        <span class="sum-item">
-            입고합계 <b>{{ "{:,.1f}".format(ns.total_in|int) }}</b>
-        </span>
-        <span class="sum-item">
-            출고합계 <b>{{ "{:,.1f}".format(ns.total_out|int) }}</b>
-        </span>
-        <span class="sum-item sum-strong">
-            재고합계 <b>{{ "{:,.1f}".format(ns.total_stock|int) }}</b>
-        </span>
-    </div>
-
-
-    {% for r in rows %}
-    <tr>
-        <td><input type="checkbox" class="chk-lot" data-lot="{{ r.lot_no }}"></td>
-        <td>{{ r.lot_no }}</td>
-        <td>{{ r.owner_name }}</td>
-        <td>{{ r.steel_type }}</td>
-        <td>{{ r.size }}</td>
-        <td>{{ r.maker }}</td>
-        <td>{{ r.in_qty }}</td>
-        <td>{{ r.out_sum }}</td>
-        <td class="{% if r.stock_qty < 0.5 %}stock-minus{% endif %}">
-            {{ r.stock_qty }}
-        </td>
-        <td style="font-size: 15px;">{{ r.last_out_date }}</td>
-    </tr>
-    {% endfor %}
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td><input type="checkbox" class="chk-lot" data-lot="{{ r.lot_no }}"></td>
+            <td>{{ r.lot_no }}</td>
+            <td>{{ r.owner_name }}</td>
+            <td>{{ r.steel_type }}</td>
+            <td>{{ r.size }}</td>
+            <td>{{ r.maker }}</td>
+            <td>{{ r.in_qty }}</td>
+            <td>{{ r.out_sum }}</td>
+            <td class="{% if r.stock_qty < 0.5 %}stock-minus{% endif %}">{{ r.stock_qty }}</td>
+            <td style="font-size: 15px;">{{ r.last_out_date }}</td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
+
 {% endblock %}
