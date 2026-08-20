@@ -1114,12 +1114,22 @@ def customs():
 
 
 
-if __name__ == "__main__":
-    # print(app.url_map)
-    app.run(host="127.0.0.1", port=5000, debug=True)
-
 # if __name__ == "__main__":
-#     import webbrowser
-#     webbrowser.open("http://127.0.0.1:8000/list")  # 시작 페이지
-#     app.run(host="127.0.0.1", port=8000)
+#     # print(app.url_map)
+#     app.run(host="127.0.0.1", port=5000, debug=True)
 
+import threading, webbrowser, time, socket
+
+def wait_and_open(url="http://127.0.0.1:8000", host="127.0.0.1", port=8000, timeout=15):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                webbrowser.open(url)
+                return
+        except OSError:
+            time.sleep(0.2)
+
+if __name__ == "__main__":
+    threading.Thread(target=wait_and_open, daemon=True).start()
+    app.run(host="127.0.0.1", port=8000, debug=False)
