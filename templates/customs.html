@@ -1,60 +1,141 @@
 {% extends "main.html" %}
 
 {% block contents %}
+
 <script src="/static/js/customs_btn.js"></script>
 <link href="/static/css/customs.css" rel="stylesheet">
+
 <h1>세관조회</h1>
+
 <div class="customs-actions">
-    <button type="button" id="btnCrawl">미통관/부분통관 갱신</button>
-    <button type="button" id="btnReload" onclick="location.reload()">새로고침</button>
-    <button>내려받기</button>
+    <button type="button" id="btnCrawl">
+        미통관/부분통관 갱신
+    </button>
+
+    <button type="button" id="btnReload" onclick="location.reload()">
+        새로고침
+    </button>
+
+    <button type="button">
+        엑셀 내려받기
+    </button>
 </div>
+
 <div class="customs-list-scroll">
     <table border="1">
         <thead>
             <tr>
                 <th>순번</th>
-                <!-- <th>LOT</th> -->
                 <th>선명</th>
                 <th>화물관리번호</th>
                 <th>BL</th>
                 <th>수량</th>
                 <th>중량</th>
-                <th>통관합계</th>
                 <th>출고수량</th>
+                <th>잔량(수량)</th>
+                <th>잔량(톤)</th>
+                <th>통관합계</th>
                 <th>통관진행</th>
             </tr>
         </thead>
+
         <tbody>
             {% for r in rows %}
+
+            {% set in_qty = r.total_in_qty or 0 %}
+            {% set in_weight = r.total_in_weight or 0 %}
+            {% set out_qty = r.total_out_qty or 0 %}
+            {% set remain_qty = in_qty - out_qty %}
+
             <tr>
-                <td style="width: 50px;">{{ loop.index }}</td>
-                <td>{{ r.vessel_name }}</td>
-                <td class="cargo-no">{{ r.cargo_no }}</td>
-                <td>{{ r.bl_no }}</td>
+                <!-- 순번 -->
+                <td style="width: 50px;">
+                    {{ loop.index }}
+                </td>
 
-                <!-- 수량 -->
-                <td>{{ r.total_in_qty }}</td>
+                <!-- 선명 -->
+                <td>
+                    {{ r.vessel_name }}
+                </td>
 
-                <!-- 중량 -->
-                <td>{{ "%.3f"|format(r.total_in_weight or 0) }}</td>
+                <!-- 화물관리번호 -->
+                <td class="cargo-no">
+                    {{ r.cargo_no }}
+                </td>
 
-                <!-- 통관합계 = 수량합  클롤링 해서 통관수량 나옴-->
-                <!-- <td>{{ r.total_in_qty }}</td> -->
-                <td>작업중</td>
+                <!-- BL -->
+                <td>
+                    {{ r.bl_no }}
+                </td>
+
+                <!-- 입고수량 -->
+                <td>
+                    {{ "%.1f"|format(in_qty) }}
+                </td>
+
+                <!-- 입고중량 -->
+                <td>
+                    {{ "%.3f"|format(in_weight) }}
+                </td>
+
                 <!-- 출고수량 -->
-                <td>{{ r.total_out_qty }}</td>
+                <td>
+                    {{ "%.1f"|format(out_qty) }}
+                </td>
+
+                <!-- 잔량수량 -->
+                <td>
+                    {{ "%.1f"|format(remain_qty) }}
+                </td>
+
+                <!-- 잔량톤: 입고 평균 단중 기준 -->
+                <td>
+                    {% if in_qty > 0 %}
+                    {% set avg_weight = in_weight / in_qty %}
+                    {% set remain_weight = remain_qty * avg_weight %}
+                    {{ "%.3f"|format(remain_weight) }}
+                    {% else %}
+                    0.000
+                    {% endif %}
+                </td>
+
+                <!-- 통관합계 -->
+                <td>
+                    작업중
+                </td>
+
+                <!-- 통관진행 -->
                 <td class="customs-td">
                     <select class="customs-status" data-cargo="{{ r.cargo_no }}">
-                        <option value="" {% if r.customs_status=='' %}selected{% endif %}>--선택--</option>
-                        <option value="미통관" {% if r.customs_status=='미통관' %}selected{% endif %}>미통관</option>
-                        <option value="부분통관" {% if r.customs_status=='부분통관' %}selected{% endif %}>부분통관</option>
-                        <option value="통관" {% if r.customs_status=='통관' %}selected{% endif %}>통관</option>
+
+                        <option value="" {% if not r.customs_status %} selected {% endif %}>
+                            --선택--
+                        </option>
+
+                        <option value="미통관" {% if r.customs_status=='미통관' %} selected {% endif %}>
+                            미통관
+                        </option>
+
+                        <option value="부분통관" {% if r.customs_status=='부분통관' %} selected {% endif %}>
+                            부분통관
+                        </option>
+
+                        <option value="통관" {% if r.customs_status=='통관' %} selected {% endif %}>
+                            통관
+                        </option>
                     </select>
+                </td>
+            </tr>
+
+            {% else %}
+            <tr>
+                <td colspan="11">
+                    조회된 자료가 없습니다.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
 {% endblock %}
