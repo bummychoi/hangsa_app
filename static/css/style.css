@@ -1295,3 +1295,50 @@ textarea {
 .summary-bar .sum-strong b{
   color:#0b5ed7;
 }
+
+body {
+    overflow: hidden;
+}
+
+.list-scroll {
+    height: calc(100vh - 182px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.list-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.list-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.list-scroll thead th {
+    background: #dffafa;
+}
+
+/* 홀수 행 */
+.list-scroll tbody tr:nth-child(odd) td {
+    background-color: #a9eded;
+}
+
+/* 짝수 행 */
+.list-scroll tbody tr:nth-child(even) td {
+    background-color: #f2f2f2;
+}
+
+/* 마우스를 올린 행 */
+.list-scroll tbody tr:hover td {
+    background-color: #fff3a6;
+}
+
+.save-date-text {
+    width: 150px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

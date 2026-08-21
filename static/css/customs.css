@@ -105,3 +105,46 @@ td.customs-cell select.customs-status option {
     background: #2563eb;
     color: white;
 }
+body {
+    overflow: hidden;
+}
+
+/* 세관조회 목록 영역만 스크롤 */
+.customs-list-scroll {
+    height: calc(100vh - 182px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 목록 너비 유지 */
+.customs-list-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* 스크롤해도 테이블 제목 고정 */
+.customs-list-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* 제목 배경이 투명해지지 않도록 */
+.customs-list-scroll thead th {
+    background: #dffafa;
+}
+
+/* 홀수 행 */
+.customs-list-scroll tbody tr:nth-child(odd) td {
+    background-color: #a9eded;
+}
+
+/* 짝수 행 */
+.customs-list-scroll tbody tr:nth-child(even) td {
+    background-color: #f2f2f2;
+}
+
+/* 마우스를 올린 행 */
+.customs-list-scroll tbody tr:hover td {
+    background-color: #fff3a6;
+}

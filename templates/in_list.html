@@ -45,48 +45,61 @@
     </ul>
   </div>
 </div>
-
-<table border="1">
-  <thead>
-    <tr>
-      <th onclick="sortTable(this, 0)">순번</th>
-      <th onclick="sortTable(this, 1)">LOT</th>
-      <th onclick="sortTable(this, 2)">선명</th>
-      <th onclick="sortTable(this, 3)">화물관리번호</th>
-      <th onclick="sortTable(this, 4)">BL</th>
-      <th onclick="sortTable(this, 5)">화종</th>
-      <th onclick="sortTable(this, 6)">화주</th>
-      <th onclick="sortTable(this, 7)">제강사</th>
-      <th onclick="sortTable(this, 8)">강종</th>
-      <th onclick="sortTable(this, 9)">규격</th>
-      <th onclick="sortTable(this, 10)">수량</th>
-      <th onclick="sortTable(this, 11)">중량</th>
-      <th onclick="sortTable(this, 12)">단중</th>
-      <th onclick="sortTable(this, 13)">저장일시</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in rows %}
-    <tr id="{{row.lot_no}}" dat_lot="{{row.lot_no}}">
-      <td title="{{loop.index}}">{{loop.index}}</td>
-      <td title="{{row.lot_no}}">{{ row.lot_no }}</td>
-      <td title="{{row.vessel_name}}">{{ row.vessel_name }}</td>
-      <td title="{{ row.cargo_no }}">{{ row.cargo_no }}</td>
-      <td title="{{ row.bl_no }}">{{ row.bl_no }}</td>
-      <td title="{{ row.cargo_type }}">{{ row.cargo_type }}</td>
-      <td title="{{ row.owner_name }}">{{ row.owner_name }}</td>
-      <td title="{{ row.maker }}">{{ row.maker }}</td>
-      <td title="{{ row.steel_type }}">{{ row.steel_type }}</td>
-      <td title="{{ row.size }}">{{ row.size }}</td>
-      <td title="{{ row.bundle_qty }}">{{ row.bundle_qty }}</td>
-      <td title="{{ row.mt_weight }}">{{ row.mt_weight }}</td>
-      <td title="{{ row.unit_wt }}">{{ "%.3f"|format(row.unit_wt or 0) }}</td>
-      <td title="{{ row.date_at }}">{{ row.date_at }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+<div class="list-scroll">
+  <table border="1">
+    <thead>
+      <tr>
+        <th onclick="sortTable(this, 0)" style="width:60px; font-size: 18px;">순번</th>
+        <th onclick="sortTable(this, 1)" style="width:180px; font-size: 15px;">LOT</th>
+        <th onclick="sortTable(this, 2)" style="width:180px; font-size: 15px;">선명</th>
+        <th onclick="sortTable(this, 3)" style="width:200px; font-size: 15px;">화물관리번호</th>
+        <th onclick="sortTable(this, 4)">BL</th>
+        <th onclick="sortTable(this, 5)">화종</th>
+        <th onclick="sortTable(this, 6)" style="width:220px; font-size: 12px;">화주</th>
+        <th onclick="sortTable(this, 7)">제강사</th>
+        <th onclick="sortTable(this, 8)" style="width:80px; font-size: 12px;">강종</th>
+        <th onclick="sortTable(this, 9)" style="width:200px; font-size: 15px;">규격</th>
+        <th onclick="sortTable(this, 10)">수량</th>
+        <th onclick="sortTable(this, 11)">중량</th>
+        <th onclick="sortTable(this, 12)" style="width:80px; font-size: 12px;">단중</th>
+        <th onclick="sortTable(this, 13)" style="width:100px; min-width:100px; max-width:100px; font-size:10px;">저장일시
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr id="{{row.lot_no}}" dat_lot="{{row.lot_no}}">
+        <td title="{{loop.index}}">{{loop.index}}</td>
+        <td title="{{row.lot_no}}">{{ row.lot_no }}</td>
+        <td title="{{row.vessel_name}}" class="save-date-text" >
+          <div class="save-date-text">
+            {{ row.vessel_name }}
+          </div>
+        </td>
+        <td title="{{ row.cargo_no }}">{{ row.cargo_no }}</td>
+        <td title="{{ row.bl_no }}">{{ row.bl_no }}</td>
+        <td title="{{ row.cargo_type }}">{{ row.cargo_type }}</td>
+        <td title="{{ row.owner_name }}" class="save-date-text">
+          <div class="save-date-text" >
+             {{ row.owner_name }}
+          </div>
+        </td>
+        <td title="{{ row.maker }}">{{ row.maker }}</td>
+        <td title="{{ row.steel_type }}">{{ row.steel_type }}</td>
+        <td title="{{ row.size }}">{{ row.size }}</td>
+        <td title="{{ row.bundle_qty }}">{{ row.bundle_qty }}</td>
+        <td title="{{ row.mt_weight }}">{{ row.mt_weight }}</td>
+        <td title="{{ row.unit_wt }}">{{ "%.3f"|format(row.unit_wt or 0) }}</td>
+        <td title="{{ row.date_at }}" class="save-date-text">
+          <div class="save-date-text">
+            {{ row.date_at }}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 <div id="lotModal" class="modal_bg">
   <div class="modal_box">
     <div class="btns button">
