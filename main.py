@@ -8,6 +8,7 @@ import subprocess
 import time
 import webbrowser
 
+# from routes.customs_routes import customs_bp
 
 from decimal import Decimal, InvalidOperation
 
@@ -36,6 +37,7 @@ conn = pymysql.connect(
 with conn.cursor() as cur:
     cur.execute(f"CREATE SCHEMA IF NOT EXISTS hangsa")
 conn.select_db("hangsa")
+
 
 
 # 테이블 생성

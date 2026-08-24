@@ -3,6 +3,8 @@
 {% block contents %}
 
 <script src="/static/js/customs_btn.js"></script>
+<script src="/static/js/ex_read.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="/static/css/customs.css" rel="stylesheet">
 
 <h1>세관조회</h1>
@@ -16,13 +18,13 @@
         새로고침
     </button>
 
-    <button type="button">
+    <button type="button" onclick="ex_read()">
         엑셀 내려받기
     </button>
 </div>
 
 <div class="customs-list-scroll">
-    <table border="1">
+    <table id="customsTable" border="1">
         <thead>
             <tr>
                 <th>순번</th>
@@ -36,6 +38,7 @@
                 <th>잔량(톤)</th>
                 <th>통관합계</th>
                 <th>통관진행</th>
+                <th>Delivery Order</th>
             </tr>
         </thead>
 
@@ -106,22 +109,35 @@
 
                 <!-- 통관진행 -->
                 <td class="customs-td">
-                    <select class="customs-status" data-cargo="{{ r.cargo_no }}">
+                    <select class="customs-status" data-cargo="{{ r.cargo_no }}" onchange="customsSelect(this)">
 
-                        <option value="" {% if not r.customs_status %} selected {% endif %}>
-                            --선택--
-                        </option>
+                        <option value="">-선택-</option>
 
-                        <option value="미통관" {% if r.customs_status=='미통관' %} selected {% endif %}>
+                        <option value="입력">입력</option>
+
+                        <option value="미통관" {% if r.customs_status=='미통관' %}selected{% endif %}>
                             미통관
                         </option>
 
-                        <option value="부분통관" {% if r.customs_status=='부분통관' %} selected {% endif %}>
+                        <option value="부분통관" {% if r.customs_status=='부분통관' %}selected{% endif %}>
                             부분통관
                         </option>
 
-                        <option value="통관" {% if r.customs_status=='통관' %} selected {% endif %}>
+                        <option value="통관" {% if r.customs_status=='통관' %}selected{% endif %}>
                             통관
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <select>
+                        <option value="등록">
+                            등록
+                        </option>
+                        <option value="미확인">
+                            미확인
+                        </option>
+                        <option value="확인">
+                            확인
                         </option>
                     </select>
                 </td>
