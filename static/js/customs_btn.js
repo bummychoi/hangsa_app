@@ -58,39 +58,3 @@ document.addEventListener("click", function (e) {
     alert(id);
 });
 
-
-// document.querySelectorAll(".history-row").forEach(function (row) {
-
-//     row.addEventListener("click", function () {
-
-//         const weightMt = Number(this.dataset.weightMt) || 0;
-
-//         document.getElementById("customs_id").value =
-//             this.dataset.id;
-
-//         document.getElementById("declaration_date").value =
-//             this.dataset.date;
-
-//         document.getElementById("declaration_no").value =
-//             this.dataset.no;
-
-//         document.getElementById("customs_qty").value =
-//             this.dataset.qty;
-
-//         document.getElementById("customs_qty_unit").value =
-//             this.dataset.unit;
-
-//         document.getElementById("customs_weight_mt").value =
-//             weightMt.toFixed(3);
-
-//         document.getElementById("customs_weight_kg").value =
-//             (weightMt * 1000).toFixed(3);
-
-//         document.querySelectorAll(".history-row").forEach(function (item) {
-//             item.classList.remove("selected");
-//         });
-
-//         this.classList.add("selected");
-//     });
-
-// });

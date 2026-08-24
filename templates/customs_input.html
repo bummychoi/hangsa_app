@@ -21,9 +21,8 @@
                 <span>저장내역</span>
 
                 <a class="cargo-track-button"
-                   href="https://mcube.ne.kr/interface/cargoTracking.do?yhtService=whp&cargMtNo={{ cargo_no|trim|replace('-', '')|upper }}"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                    href="https://mcube.ne.kr/interface/cargoTracking.do?yhtService=whp&cargMtNo={{ cargo_no|trim|replace('-', '')|upper }}"
+                    target="_blank" rel="noopener noreferrer">
                     {{ cargo_no }}
                 </a>
             </div>
@@ -46,19 +45,17 @@
 
                         {% for row in customs_rows %}
 
-                        <tr class="history-row"
-                            data-id="{{ row.id }}"
+                        <tr class="history-row" data-id="{{ row.id }}"
                             data-date="{{ row.declaration_date.strftime('%Y-%m-%d %H:%M:%S') }}"
-                            data-no="{{ row.declaration_no }}"
-                            data-qty="{{ row.customs_qty }}"
-                            data-unit="{{ row.customs_qty_unit }}"
-                            data-weight-mt="{{ row.customs_weight_mt }}">
+                            data-no="{{ row.declaration_no }}" data-qty="{{ row.customs_qty }}"
+                            data-unit="{{ row.customs_qty_unit }}" data-weight-mt="{{ row.customs_weight_mt }}"
+                            onclick="alert(this.dataset.id);">
 
                             <td>{{ loop.index }}</td>
 
                             <td>
                                 {{ row.declaration_date.strftime(
-                                    "%Y-%m-%d %H:%M:%S"
+                                "%Y-%m-%d %H:%M:%S"
                                 ) }}
                             </td>
 
@@ -94,15 +91,10 @@
 
 
         <!-- 등록·수정 폼 -->
-        <form id="customsInputForm"
-              action="/customs/save"
-              method="post">
+        <form id="customsInputForm" action="/customs/save" method="post">
 
             <!-- 수정 대상 ID -->
-            <input type="hidden"
-                   id="customs_id"
-                   name="customs_id"
-                   value="">
+            <input type="hidden" id="customs_id" name="customs_id" value="">
 
             <div class="form-row">
 
@@ -110,11 +102,7 @@
                     화물관리번호
                 </label>
 
-                <input type="text"
-                       id="cargo_no"
-                       name="cargo_no"
-                       value="{{ cargo_no }}"
-                       readonly>
+                <input type="text" id="cargo_no" name="cargo_no" value="{{ cargo_no }}" readonly>
 
             </div>
 
@@ -125,14 +113,8 @@
                     수입신고 수리일시
                 </label>
 
-                <input type="text"
-                       id="declaration_date"
-                       name="declaration_date"
-                       value="{{ today }}"
-                       placeholder="2026-03-24 16:31:36"
-                       maxlength="19"
-                       autocomplete="off"
-                       required>
+                <input type="text" id="declaration_date" name="declaration_date" value="{{ today }}"
+                    placeholder="2026-03-24 16:31:36" maxlength="19" autocomplete="off" required>
 
             </div>
 
@@ -143,12 +125,7 @@
                     수입신고번호
                 </label>
 
-                <input type="text"
-                       id="declaration_no"
-                       name="declaration_no"
-                       maxlength="30"
-                       autocomplete="off"
-                       required>
+                <input type="text" id="declaration_no" name="declaration_no" maxlength="30" autocomplete="off" required>
 
             </div>
 
@@ -161,15 +138,9 @@
 
                 <div class="qty-wrap">
 
-                    <input type="number"
-                           id="customs_qty"
-                           name="customs_qty"
-                           min="0"
-                           step="0.001"
-                           required>
+                    <input type="number" id="customs_qty" name="customs_qty" min="0" step="0.001" required>
 
-                    <select id="customs_qty_unit"
-                            name="customs_qty_unit">
+                    <select id="customs_qty_unit" name="customs_qty_unit">
 
                         <option value="GT">GT</option>
                         <option value="KG">KG</option>
@@ -188,12 +159,7 @@
                     신고중량(kg)
                 </label>
 
-                <input type="number"
-                       id="customs_weight_kg"
-                       name="customs_weight_kg"
-                       min="0"
-                       step="0.001"
-                       required>
+                <input type="number" id="customs_weight_kg" name="customs_weight_kg" min="0" step="0.001" required>
 
             </div>
 
@@ -204,11 +170,7 @@
                     신고톤수(M/T)
                 </label>
 
-                <input type="text"
-                       id="customs_weight_mt"
-                       name="customs_weight_mt"
-                       value="0.000"
-                       readonly>
+                <input type="text" id="customs_weight_mt" name="customs_weight_mt" value="0.000" readonly>
 
             </div>
 
@@ -219,10 +181,7 @@
                     보세창고
                 </label>
 
-                <input type="text"
-                       id="warehouse_name"
-                       name="warehouse_name"
-                       value="동방북항보세창고">
+                <input type="text" id="warehouse_name" name="warehouse_name" value="동방북항보세창고">
 
             </div>
 
@@ -233,27 +192,23 @@
                     비고
                 </label>
 
-                <textarea id="remark"
-                          name="remark"></textarea>
+                <textarea id="remark" name="remark"></textarea>
 
             </div>
 
 
             <div class="button-wrap">
 
-                <button type="submit"
-                        id="saveButton"
-                        class="save-button">
+                <button type="submit" id="saveButton" class="save-button">
                     저장
                 </button>
 
-                <button type="button"
+                <!-- <button type="button"
                         id="newButton">
                     신규
-                </button>
+                </button> -->
 
-                <button type="button"
-                        onclick="window.close()">
+                <button type="button" onclick="window.close()">
                     닫기
                 </button>
 
