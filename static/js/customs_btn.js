@@ -46,3 +46,4 @@ document.addEventListener("change", function(e){
 window.addEventListener("DOMContentLoaded", function(){
   document.querySelectorAll(".customs-status").forEach(applyStatusStyle);
 });
+

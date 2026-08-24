@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>수입신고 등록</title>
+    <link href="/static/css/customs_input.css" rel="stylesheet">
+</head>
+
+<body>
+
+
+    <div class="customs-form">
+        <h2>수입신고 등록</h2>
+        <div class="history-wrap">
+            <div class="history-title">
+    <span>저장내역</span>
+
+    <a class="cargo-track-button"
+       href="https://mcube.ne.kr/interface/cargoTracking.do?yhtService=whp&cargMtNo={{ cargo_no|trim|replace('-', '')|upper }}"
+       target="_blank"
+       rel="noopener noreferrer">
+        {{ cargo_no }}
+    </a>
+</div>
+
+            <div class="history-scroll">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>수리일시</th>
+                            <th>신고번호</th>
+                            <th>수량</th>
+                            <th>톤수</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in customs_rows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+                                {{ row.declaration_date.strftime(
+                                "%Y-%m-%d %H:%M:%S"
+                                ) }}
+                            </td>
+
+                            <td>{{ row.declaration_no }}</td>
+
+                            <td>
+                                {{ "{:,.3f}".format(row.customs_qty) }}
+                                {{ row.customs_qty_unit }}
+                            </td>
+
+                            <td>
+                                {{ "{:,.3f}".format(row.customs_weight_mt) }}
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="no-data">
+                                등록된 수입신고 내역이 없습니다.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <form id="customsInputForm" action="/customs/save" method="post">
+            <div class="form-row">
+                <label for="cargo_no">화물관리번호</label>
+
+                <input type="text" id="cargo_no" name="cargo_no" value="{{ cargo_no }}" readonly>
+            </div>
+
+            <div class="form-row">
+                <label for="declaration_date">수입신고 수리일시</label>
+
+                <input type="text" id="declaration_date" name="declaration_date" value="{{ today }}"
+                    placeholder="2026-03-24 16:31:36" maxlength="19" autocomplete="off" required>
+            </div>
+
+            <div class="form-row">
+                <label for="declaration_no">수입신고번호</label>
+
+                <input type="text" id="declaration_no" name="declaration_no" maxlength="30" autocomplete="off" required>
+            </div>
+
+            <div class="form-row">
+                <label for="customs_qty">신고수량</label>
+
+                <div class="qty-wrap">
+                    <input type="number" id="customs_qty" name="customs_qty" min="0" step="0.001" required>
+
+                    <select id="customs_qty_unit" name="customs_qty_unit">
+                        <option value="GT">GT</option>
+                        <option value="KG">KG</option>
+                        <option value="MT">M/T</option>
+                        <option value="EA">EA</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="customs_weight_kg">신고중량(kg)</label>
+
+                <input type="number" id="customs_weight_kg" name="customs_weight_kg" min="0" step="0.001" required>
+            </div>
+
+            <div class="form-row">
+                <label for="customs_weight_mt">신고톤수(M/T)</label>
+
+                <input type="text" id="customs_weight_mt" name="customs_weight_mt" value="0.000" readonly>
+            </div>
+
+            <div class="form-row">
+                <label for="warehouse_name">보세창고</label>
+
+                <input type="text" id="warehouse_name" name="warehouse_name" value="동방북항보세창고">
+            </div>
+
+            <div class="form-row">
+                <label for="remark">비고</label>
+
+                <textarea id="remark" name="remark"></textarea>
+            </div>
+
+            <div class="button-wrap">
+                <button type="submit" class="save-button">
+                    저장
+                </button>
+
+                <button type="button" onclick="window.close()">
+                    닫기
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const weightInput = document.getElementById("customs_weight_kg");
+        const mtInput = document.getElementById("customs_weight_mt");
+
+        weightInput.addEventListener("input", function () {
+            const weightKg = Number(this.value) || 0;
+            mtInput.value = (weightKg / 1000).toFixed(3);
+        });
+
+        document.getElementById("declaration_no").focus();
+    </script>
+
+</body>
+
+</html>

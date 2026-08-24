@@ -1115,10 +1115,256 @@ def customs():
 
 
 
+# # 통관관리
+# # 수입신고 통관등록 테이블
+# with conn.cursor() as cur:
+#     cur.execute("""
+#         CREATE TABLE IF NOT EXISTS customs_d (
+#             id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+#             cargo_no VARCHAR(30) NOT NULL,
+#             declaration_no VARCHAR(30) NOT NULL,
+#             declaration_date DATETIME NOT NULL,
+
+#             customs_qty DECIMAL(12,3) NOT NULL DEFAULT 0,
+#             customs_qty_unit VARCHAR(10),
+
+#             customs_weight_kg DECIMAL(14,3) NOT NULL DEFAULT 0,
+
+#             customs_weight_mt DECIMAL(14,3)
+#             GENERATED ALWAYS AS (
+#                 customs_weight_kg / 1000
+#             ) STORED,
+
+#             warehouse_name VARCHAR(100),
+#             remark VARCHAR(255),
+
+#             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+#             updated_at DATETIME NOT NULL
+#                 DEFAULT CURRENT_TIMESTAMP
+#                 ON UPDATE CURRENT_TIMESTAMP,
+
+#             UNIQUE KEY uk_customs_declaration (
+#                 cargo_no,
+#                 declaration_no
+#             ),
+
+#             KEY idx_customs_cargo (cargo_no),
+#             KEY idx_customs_date (declaration_date)
+#         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#     """)
+
+#             CASE
+#                 WHEN COALESCE(c.customs_weight_mt, 0) = 0
+#                     THEN '미통관'
+
+#                 WHEN c.customs_weight_mt < x.total_in_weight - 0.001
+#                     THEN '부분통관'
+
+#                 WHEN ABS(c.customs_weight_mt - x.total_in_weight) <= 0.001
+#                     THEN '통관완료'
+
+#                 ELSE '확인필요'
+#             END AS customs_status
+
 
 # if __name__ == "__main__":
 #     # print(app.url_map)
 #     app.run(host="127.0.0.1", port=5000, debug=True)
+
+
+# 통관입력
+# 통관 입력창 + 화물관리번호별 저장내역 조회
+@app.route("/customs/input")
+def customs_input():
+    cargo_no = (request.args.get("cargo_no") or "").strip()
+
+    sql = """
+        SELECT
+            id,
+            declaration_date,
+            declaration_no,
+            customs_qty,
+            customs_qty_unit,
+            customs_weight_kg,
+            customs_weight_mt,
+            warehouse_name,
+            remark
+        FROM customs_d
+        WHERE cargo_no = %s
+        ORDER BY declaration_date DESC, id DESC
+    """
+
+    conn.ping(reconnect=True)
+
+    with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        cur.execute(sql, (cargo_no,))
+        customs_rows = cur.fetchall()
+
+    return render_template(
+        "customs_input.html",
+        cargo_no=cargo_no,
+        today=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        customs_rows=customs_rows
+    )
+
+
+@app.route("/customs/save", methods=["POST"])
+def customs_save():
+    cargo_no = (request.form.get("cargo_no") or "").strip()
+    declaration_no = (
+        request.form.get("declaration_no") or ""
+    ).strip()
+
+    declaration_date_text = (
+        request.form.get("declaration_date") or ""
+    ).strip()
+
+    customs_qty_text = (
+        request.form.get("customs_qty") or "0"
+    ).replace(",", "").strip()
+
+    customs_qty_unit = (
+        request.form.get("customs_qty_unit") or "GT"
+    ).strip().upper()
+
+    customs_weight_text = (
+        request.form.get("customs_weight_kg") or "0"
+    ).replace(",", "").strip()
+
+    warehouse_name = (
+        request.form.get("warehouse_name") or ""
+    ).strip()
+
+    remark = (
+        request.form.get("remark") or ""
+    ).strip()
+
+    # 필수값 확인
+    if not cargo_no:
+        return """
+            <script>
+                alert("화물관리번호가 없습니다.");
+                history.back();
+            </script>
+        """
+
+    if not declaration_no:
+        return """
+            <script>
+                alert("수입신고번호를 입력하세요.");
+                history.back();
+            </script>
+        """
+
+    # 날짜 변환
+    try:
+        declaration_date = datetime.strptime(
+            declaration_date_text,
+            "%Y-%m-%d %H:%M:%S"
+        )
+    except ValueError:
+        return """
+            <script>
+                alert("수입신고일시는 2026-03-24 16:31:36 형식으로 입력하세요.");
+                history.back();
+            </script>
+        """
+
+    # 수량·중량 숫자 변환
+    try:
+        customs_qty = Decimal(customs_qty_text)
+        customs_weight_kg = Decimal(customs_weight_text)
+
+    except InvalidOperation:
+        return """
+            <script>
+                alert("수량과 중량은 숫자로 입력하세요.");
+                history.back();
+            </script>
+        """
+
+    if customs_qty <= 0 or customs_weight_kg <= 0:
+        return """
+            <script>
+                alert("수량과 중량은 0보다 커야 합니다.");
+                history.back();
+            </script>
+        """
+
+    sql = """
+        INSERT INTO customs_d (
+            cargo_no,
+            declaration_date,
+            declaration_no,
+            customs_qty,
+            customs_qty_unit,
+            customs_weight_kg,
+            warehouse_name,
+            remark
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+
+    try:
+        conn.ping(reconnect=True)
+
+        with conn.cursor() as cur:
+            cur.execute(sql, (
+                cargo_no,
+                declaration_date,
+                declaration_no,
+                customs_qty,
+                customs_qty_unit,
+                customs_weight_kg,
+                warehouse_name,
+                remark
+            ))
+
+        conn.commit()
+
+        return """
+            <script>
+                alert("수입신고 내역이 저장되었습니다.");
+
+                if (window.opener && !window.opener.closed) {
+                    window.opener.location.reload();
+                }
+
+                window.close();
+            </script>
+        """
+
+    except pymysql.err.IntegrityError as e:
+        conn.rollback()
+
+        if e.args[0] == 1062:
+            return """
+                <script>
+                    alert("이미 등록된 수입신고번호입니다.");
+                    history.back();
+                </script>
+            """
+
+        return f"""
+            <script>
+                alert("DB 저장 오류가 발생했습니다.");
+                history.back();
+            </script>
+        """
+
+    except Exception as e:
+        conn.rollback()
+        print("🔥 통관등록 저장 오류:", e)
+
+        return """
+            <script>
+                alert("저장 중 오류가 발생했습니다.");
+                history.back();
+            </script>
+        """
+
+
 
 import threading, webbrowser, time, socket
 
