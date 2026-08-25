@@ -341,3 +341,77 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
 });
+
+
+function applyStatusStyle(select) {
+
+  const status =
+    (select.value || "").trim();
+
+  select.style.color = "#fff";
+  select.style.fontWeight = "bold";
+
+  if (status === "미통관") {
+
+    // 적색
+    select.style.backgroundColor =
+      "#e11d48";
+
+  } else if (status === "부분통관") {
+
+    // 노란색
+    select.style.backgroundColor =
+      "#f59e0b";
+
+    select.style.color =
+      "#222";
+
+  } else if (status === "통관") {
+
+    // 파란색
+    select.style.backgroundColor =
+      "#2563eb";
+
+  } else {
+
+    select.style.backgroundColor =
+      "";
+
+    select.style.color =
+      "";
+
+    select.style.fontWeight =
+      "";
+  }
+}
+
+
+/*
+ * 선택 변경 시 색상 적용
+ */
+document.addEventListener(
+  "change",
+  function (event) {
+
+    const select =
+      event.target.closest(".customs-status");
+
+    if (!select) return;
+
+    applyStatusStyle(select);
+  }
+);
+
+
+/*
+ * 처음 화면이 열릴 때 색상 적용
+ */
+window.addEventListener(
+  "DOMContentLoaded",
+  function () {
+
+    document
+      .querySelectorAll(".customs-status")
+      .forEach(applyStatusStyle);
+  }
+);

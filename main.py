@@ -1075,45 +1075,114 @@ def in_up_preview():
     total_qty=total_qty,
     total_weight=total_weight
 )
+
 @app.route("/customs")
 def customs():
+
     sql = """
-    SELECT
-        x.cargo_no,
-        x.vessel_name,
-        x.bl_no,
-        x.total_in_qty,
-        x.total_in_weight,
-        COALESCE(o.total_out_qty, 0) AS total_out_qty
-    FROM (
         SELECT
-            cargo_no,
-            MAX(vessel_name) AS vessel_name,
-            MAX(bl_no) AS bl_no,
-            SUM(bundle_qty) AS total_in_qty,
-            SUM(mt_weight) AS total_in_weight
-        FROM in_d_bar
-        WHERE cargo_no IS NOT NULL AND cargo_no <> ''
-        GROUP BY cargo_no
-    ) x
-    LEFT JOIN (
-        SELECT
-            i.cargo_no,
-            SUM(o.out_qty) AS total_out_qty
-        FROM out_d_bar o
-        JOIN in_d_bar i ON i.lot_no = o.lot_no
-        WHERE i.cargo_no IS NOT NULL AND i.cargo_no <> ''
-        GROUP BY i.cargo_no
-    ) o ON o.cargo_no = x.cargo_no
-    ORDER BY x.cargo_no
+            x.cargo_no,
+            x.vessel_name,
+            x.bl_no,
+            x.total_in_qty,
+            x.total_in_weight,
+
+            COALESCE(
+                o.total_out_qty,
+                0
+            ) AS total_out_qty,
+
+            COALESCE(
+                c.total_customs_weight_mt,
+                0
+            ) AS total_customs_weight_mt
+
+        FROM (
+            SELECT
+                cargo_no,
+                MAX(vessel_name) AS vessel_name,
+                MAX(bl_no) AS bl_no,
+                SUM(bundle_qty) AS total_in_qty,
+                SUM(mt_weight) AS total_in_weight
+
+            FROM in_d_bar
+
+            WHERE cargo_no IS NOT NULL
+              AND cargo_no <> ''
+
+            GROUP BY cargo_no
+        ) x
+
+
+        LEFT JOIN (
+            SELECT
+                i.cargo_no,
+                SUM(o.out_qty) AS total_out_qty
+
+            FROM out_d_bar o
+
+            JOIN in_d_bar i
+                ON i.lot_no = o.lot_no
+
+            WHERE i.cargo_no IS NOT NULL
+              AND i.cargo_no <> ''
+
+            GROUP BY i.cargo_no
+        ) o
+            ON BINARY o.cargo_no
+             = BINARY x.cargo_no
+
+
+        LEFT JOIN (
+            SELECT
+                cargo_no,
+
+                SUM(customs_weight_kg) / 1000
+                    AS total_customs_weight_mt
+
+            FROM customs_d
+
+            WHERE cargo_no IS NOT NULL
+              AND cargo_no <> ''
+
+            GROUP BY cargo_no
+        ) c
+            ON BINARY c.cargo_no
+             = BINARY x.cargo_no
+
+
+        ORDER BY x.cargo_no
     """
-    with conn.cursor(pymysql.cursors.DictCursor) as cur:
-        cur.execute(sql)
-        rows = cur.fetchall()
-
-    return render_template("customs.html", rows=rows)
 
 
+    try:
+        conn.ping(reconnect=True)
+
+        with conn.cursor(
+            pymysql.cursors.DictCursor
+        ) as cur:
+
+            cur.execute(sql)
+
+            rows = cur.fetchall()
+
+
+        return render_template(
+            "customs.html",
+            rows=rows
+        )
+
+
+    except Exception as e:
+
+        print("🔥 세관조회 오류:", e)
+
+        return """
+            <script>
+                alert("세관조회 중 오류가 발생했습니다.");
+                history.back();
+            </script>
+        """, 500
 
 # # 통관관리
 # # 수입신고 통관등록 테이블

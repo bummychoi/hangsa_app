@@ -104,46 +104,49 @@
 
                 <!-- 통관합계 -->
                 <td>
-                    작업중
+                    {{ "{:,.3f}".format(
+                    r.total_customs_weight_mt or 0
+                    ) }}
                 </td>
 
                 <!-- 통관진행 -->
+                <!-- 통관진행 -->
                 <td class="customs-td">
-                    <select class="customs-status" data-cargo="{{ r.cargo_no }}" onchange="customsSelect(this)">
 
-                        <option value="">-선택-</option>
+                    {% set total_weight = r.total_in_weight or 0 %}
+                    {% set customs_weight = r.total_customs_weight_mt or 0 %}
 
-                        <option value="입력">입력</option>
+                    {% if customs_weight <= 0 %} {% set customs_status="미통관" %} {% elif customs_weight>= total_weight %}
+                        {% set customs_status = "통관" %}
 
-                        <option value="미통관" {% if r.customs_status=='미통관' %}selected{% endif %}>
-                            미통관
-                        </option>
+                        {% else %}
+                        {% set customs_status = "부분통관" %}
+                        {% endif %}
 
-                        <option value="부분통관" {% if r.customs_status=='부분통관' %}selected{% endif %}>
-                            부분통관
-                        </option>
 
-                        <option value="통관" {% if r.customs_status=='통관' %}selected{% endif %}>
-                            통관
-                        </option>
-                    </select>
+                        <select class="customs-status" data-cargo="{{ r.cargo_no }}" onchange="customsSelect(this)">
+
+                            <option value="입력">
+                                입력
+                            </option>
+
+                            <option value="미통관" {% if customs_status=="미통관" %} selected {% endif %}>
+                                미통관
+                            </option>
+
+                            <option value="부분통관" {% if customs_status=="부분통관" %} selected {% endif %}>
+                                부분통관
+                            </option>
+
+                            <option value="통관" {% if customs_status=="통관" %} selected {% endif %}>
+                                통관
+                            </option>
+
+                        </select>
+
                 </td>
-                <td>
-                    <select>
-                        <option value="등록">
-                            등록
-                        </option>
-                        <option value="미확인">
-                            미확인
-                        </option>
-                        <option value="확인">
-                            확인
-                        </option>
-                    </select>
-                </td>
-            </tr>
 
-            {% else %}
+                {% else %}
             <tr>
                 <td colspan="11">
                     조회된 자료가 없습니다.
