@@ -1208,10 +1208,17 @@ def customs_input():
         customs_rows=customs_rows
     )
 
-
 @app.route("/customs/save", methods=["POST"])
 def customs_save():
-    cargo_no = (request.form.get("cargo_no") or "").strip()
+
+    customs_id_text = (
+        request.form.get("customs_id") or ""
+    ).strip()
+
+    cargo_no = (
+        request.form.get("cargo_no") or ""
+    ).strip()
+
     declaration_no = (
         request.form.get("declaration_no") or ""
     ).strip()
@@ -1240,7 +1247,10 @@ def customs_save():
         request.form.get("remark") or ""
     ).strip()
 
+
+    # =========================
     # 필수값 확인
+    # =========================
     if not cargo_no:
         return """
             <script>
@@ -1257,12 +1267,38 @@ def customs_save():
             </script>
         """
 
+
+    # =========================
+    # 수정 대상 ID 확인
+    # =========================
+    customs_id = None
+
+    if customs_id_text:
+
+        try:
+            customs_id = int(customs_id_text)
+
+            if customs_id <= 0:
+                raise ValueError
+
+        except ValueError:
+            return """
+                <script>
+                    alert("수정할 수입신고 ID가 올바르지 않습니다.");
+                    history.back();
+                </script>
+            """
+
+
+    # =========================
     # 날짜 변환
+    # =========================
     try:
         declaration_date = datetime.strptime(
             declaration_date_text,
             "%Y-%m-%d %H:%M:%S"
         )
+
     except ValueError:
         return """
             <script>
@@ -1271,10 +1307,18 @@ def customs_save():
             </script>
         """
 
-    # 수량·중량 숫자 변환
+
+    # =========================
+    # 수량·중량 변환
+    # =========================
     try:
-        customs_qty = Decimal(customs_qty_text)
-        customs_weight_kg = Decimal(customs_weight_text)
+        customs_qty = Decimal(
+            customs_qty_text
+        )
+
+        customs_weight_kg = Decimal(
+            customs_weight_text
+        )
 
     except InvalidOperation:
         return """
@@ -1284,6 +1328,7 @@ def customs_save():
             </script>
         """
 
+
     if customs_qty <= 0 or customs_weight_kg <= 0:
         return """
             <script>
@@ -1292,7 +1337,11 @@ def customs_save():
             </script>
         """
 
-    sql = """
+
+    # =========================
+    # 신규 등록 SQL
+    # =========================
+    insert_sql = """
         INSERT INTO customs_d (
             cargo_no,
             declaration_date,
@@ -1303,39 +1352,104 @@ def customs_save():
             warehouse_name,
             remark
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (
+            %s, %s, %s, %s,
+            %s, %s, %s, %s
+        )
     """
+
+
+    # =========================
+    # 기존 자료 수정 SQL
+    # =========================
+    update_sql = """
+        UPDATE customs_d
+
+        SET
+            declaration_date = %s,
+            declaration_no = %s,
+            customs_qty = %s,
+            customs_qty_unit = %s,
+            customs_weight_kg = %s,
+            warehouse_name = %s,
+            remark = %s
+
+        WHERE id = %s
+          AND cargo_no = %s
+    """
+
 
     try:
         conn.ping(reconnect=True)
 
         with conn.cursor() as cur:
-            cur.execute(sql, (
-                cargo_no,
-                declaration_date,
-                declaration_no,
-                customs_qty,
-                customs_qty_unit,
-                customs_weight_kg,
-                warehouse_name,
-                remark
-            ))
+
+            # 기존 자료 수정
+            if customs_id:
+
+                cur.execute(
+                    update_sql,
+                    (
+                        declaration_date,
+                        declaration_no,
+                        customs_qty,
+                        customs_qty_unit,
+                        customs_weight_kg,
+                        warehouse_name,
+                        remark,
+                        customs_id,
+                        cargo_no
+                    )
+                )
+
+                if cur.rowcount == 0:
+                    conn.rollback()
+
+                    return """
+                        <script>
+                            alert("수정할 수입신고 자료를 찾을 수 없습니다.");
+                            history.back();
+                        </script>
+                    """
+
+                success_message = (
+                    "수입신고 내역이 수정되었습니다."
+                )
+
+            # 신규 자료 저장
+            else:
+
+                cur.execute(
+                    insert_sql,
+                    (
+                        cargo_no,
+                        declaration_date,
+                        declaration_no,
+                        customs_qty,
+                        customs_qty_unit,
+                        customs_weight_kg,
+                        warehouse_name,
+                        remark
+                    )
+                )
+
+                success_message = (
+                    "수입신고 내역이 저장되었습니다."
+                )
+
 
         conn.commit()
 
-        return """
-            <script>
-                alert("수입신고 내역이 저장되었습니다.");
+        return redirect(
+            url_for(
+                "customs_input",
+                cargo_no=cargo_no
+            )
+        )
 
-                if (window.opener && !window.opener.closed) {
-                    window.opener.location.reload();
-                }
-
-                window.close();
-            </script>
-        """
 
     except pymysql.err.IntegrityError as e:
+
         conn.rollback()
 
         if e.args[0] == 1062:
@@ -1346,26 +1460,142 @@ def customs_save():
                 </script>
             """
 
-        return f"""
+        print("🔥 수입신고 무결성 오류:", e)
+
+        return """
             <script>
                 alert("DB 저장 오류가 발생했습니다.");
                 history.back();
             </script>
         """
 
+
     except Exception as e:
+
         conn.rollback()
-        print("🔥 통관등록 저장 오류:", e)
+
+        print("🔥 수입신고 저장·수정 오류:", e)
 
         return """
             <script>
-                alert("저장 중 오류가 발생했습니다.");
+                alert("저장 또는 수정 중 오류가 발생했습니다.");
+                history.back();
+            </script>
+        """
+
+@app.route("/customs/delete", methods=["POST"])
+def customs_delete():
+
+    customs_id_text = (
+        request.form.get("customs_id") or ""
+    ).strip()
+
+    cargo_no = (
+        request.form.get("cargo_no") or ""
+    ).strip()
+
+
+    # =========================
+    # 필수값 확인
+    # =========================
+    if not cargo_no:
+        return """
+            <script>
+                alert("화물관리번호가 없습니다.");
                 history.back();
             </script>
         """
 
 
+    if not customs_id_text:
+        return """
+            <script>
+                alert("삭제할 수입신고 자료가 없습니다.");
+                history.back();
+            </script>
+        """
 
+
+    # =========================
+    # 삭제 대상 ID 변환
+    # =========================
+    try:
+        customs_id = int(
+            customs_id_text
+        )
+
+        if customs_id <= 0:
+            raise ValueError
+
+    except ValueError:
+        return """
+            <script>
+                alert("삭제할 수입신고 ID가 올바르지 않습니다.");
+                history.back();
+            </script>
+        """
+
+
+    # =========================
+    # 삭제 SQL
+    # =========================
+    delete_sql = """
+        DELETE FROM customs_d
+
+        WHERE id = %s
+          AND cargo_no = %s
+    """
+
+
+    try:
+        conn.ping(reconnect=True)
+
+        with conn.cursor() as cur:
+
+            cur.execute(
+                delete_sql,
+                (
+                    customs_id,
+                    cargo_no
+                )
+            )
+
+            if cur.rowcount == 0:
+
+                conn.rollback()
+
+                return """
+                    <script>
+                        alert("삭제할 수입신고 자료를 찾을 수 없습니다.");
+                        history.back();
+                    </script>
+                """
+
+
+        conn.commit()
+
+        # 팝업을 닫지 않고 현재 화면 갱신
+        return redirect(
+            url_for(
+                "customs_input",
+                cargo_no=cargo_no
+            )
+        )
+
+
+    except Exception as e:
+
+        conn.rollback()
+
+        print("🔥 수입신고 삭제 오류:", e)
+
+        return """
+            <script>
+                alert("삭제 중 오류가 발생했습니다.");
+                history.back();
+            </script>
+        """
+    
 import threading, webbrowser, time, socket
 
 def wait_and_open(url="http://127.0.0.1:8000", host="127.0.0.1", port=8000, timeout=15):

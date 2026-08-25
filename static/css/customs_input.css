@@ -125,3 +125,103 @@
      padding: 15px !important;
      color: #777;
  }
+
+
+ /* 저장내역 제목 영역 */
+.history-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.history-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* 신규 등록 버튼 */
+.new-button {
+    padding: 7px 14px;
+    border: 1px solid #1976d2;
+    border-radius: 4px;
+    background: #1976d2;
+    color: #fff;
+    cursor: pointer;
+}
+
+.new-button:hover {
+    background: #125ea8;
+}
+
+
+/* 저장내역 행 */
+.history-row {
+    cursor: pointer;
+}
+
+.history-row:hover {
+    background: #e8f4ff;
+}
+
+
+/* 모달 배경 */
+.customs-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* 모달 표시 */
+.customs-modal.show {
+    display: flex;
+}
+
+
+/* 모달 내용 */
+.customs-modal-content {
+    width: 560px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+    padding: 24px;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+}
+
+
+/* 모달 제목 */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+
+/* 오른쪽 위 닫기 */
+.modal-close-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #555;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal-close-button:hover {
+    color: #000;
+}

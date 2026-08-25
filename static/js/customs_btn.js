@@ -1,200 +1,303 @@
-/*
- * 저장내역 행 클릭
- */
-document.addEventListener("click", function (e) {
-  const tr = e.target.closest(".customs-history-row");
+document.addEventListener("DOMContentLoaded", function () {
 
-  if (!tr) return;
+  const customsModal =
+    document.getElementById("customsModal");
 
-  openCustomsModal(tr);
-});
+  const customsInputForm =
+    document.getElementById("customsInputForm");
 
+  const modalTitle =
+    document.getElementById("modalTitle");
 
-const customsModal =
-  document.getElementById("customsModal");
+  const customsIdInput =
+    document.getElementById("customs_id");
 
-const customsInputForm =
-  document.getElementById("customsInputForm");
+  const cargoNoInput =
+    document.getElementById("cargo_no");
 
-const modalTitle =
-  document.getElementById("modalTitle");
+  const declarationDateInput =
+    document.getElementById("declaration_date");
 
-const customsIdInput =
-  document.getElementById("customs_id");
+  const declarationNoInput =
+    document.getElementById("declaration_no");
 
-const cargoNoInput =
-  document.getElementById("cargo_no");
+  const customsQtyInput =
+    document.getElementById("customs_qty");
 
-const declarationDateInput =
-  document.getElementById("declaration_date");
+  const customsQtyUnitInput =
+    document.getElementById("customs_qty_unit");
 
-const declarationNoInput =
-  document.getElementById("declaration_no");
+  const customsWeightKgInput =
+    document.getElementById("customs_weight_kg");
 
-const customsQtyInput =
-  document.getElementById("customs_qty");
+  const customsWeightMtInput =
+    document.getElementById("customs_weight_mt");
 
-const customsQtyUnitInput =
-  document.getElementById("customs_qty_unit");
+  const warehouseNameInput =
+    document.getElementById("warehouse_name");
 
-const customsWeightKgInput =
-  document.getElementById("customs_weight_kg");
+  const remarkInput =
+    document.getElementById("remark");
 
-const customsWeightMtInput =
-  document.getElementById("customs_weight_mt");
+  const saveButton =
+    document.getElementById("saveButton");
 
-const warehouseNameInput =
-  document.getElementById("warehouse_name");
-
-const remarkInput =
-  document.getElementById("remark");
+  const deleteButton =
+    document.getElementById("deleteButton");
 
 
-/*
- * 기존 저장내역 수정
- */
-function openCustomsModal(row) {
-  if (!customsModal || !customsInputForm) {
-    console.error("수입신고 모달 또는 입력폼을 찾을 수 없습니다.");
+  /*
+   * 필수 요소 확인
+   */
+  if (
+    !customsModal ||
+    !customsInputForm ||
+    !saveButton ||
+    !deleteButton
+  ) {
+    console.error(
+      "수입신고 모달에 필요한 요소를 찾을 수 없습니다."
+    );
+
     return;
   }
 
-  modalTitle.textContent = "수입신고 수정";
-
-  customsIdInput.value =
-    row.dataset.id || "";
-
-  declarationDateInput.value =
-    row.dataset.date || "";
-
-  declarationNoInput.value =
-    row.dataset.no || "";
-
-  customsQtyInput.value =
-    row.dataset.qty || "";
-
-  customsQtyUnitInput.value =
-    row.dataset.unit || "GT";
-
-  customsWeightKgInput.value =
-    formatInputNumber(row.dataset.weightKg);
-
-  customsWeightMtInput.value =
-    formatMt(row.dataset.weightMt);
-
-  warehouseNameInput.value =
-    row.dataset.warehouse || "동방북항보세창고";
-
-  remarkInput.value =
-    row.dataset.remark || "";
-
-  customsModal.classList.add("show");
-
-  setTimeout(function () {
-    declarationDateInput.focus();
-    declarationDateInput.select();
-  }, 50);
-}
-
-
-/*
- * 신규 등록
- */
-function openNewCustomsModal() {
-  if (!customsModal || !customsInputForm) {
-    console.error("수입신고 모달 또는 입력폼을 찾을 수 없습니다.");
-    return;
-  }
 
   /*
-   * reset 전에 HTML에 들어 있던 기본값 보관
+   * 기존 저장내역 수정 모달
    */
-  const cargoNo =
-    cargoNoInput.defaultValue || cargoNoInput.value;
+  function openCustomsModal(row) {
 
-  const today =
-    declarationDateInput.defaultValue ||
-    declarationDateInput.value;
+    modalTitle.textContent =
+      "수입신고 수정";
 
-  customsInputForm.reset();
+    saveButton.textContent =
+      "수정";
 
-  modalTitle.textContent = "수입신고 등록";
+    deleteButton.hidden =
+      false;
 
-  customsIdInput.value = "";
+    customsIdInput.value =
+      row.dataset.id || "";
+
+    declarationDateInput.value =
+      row.dataset.date || "";
+
+    declarationNoInput.value =
+      row.dataset.no || "";
+
+    customsQtyInput.value =
+      row.dataset.qty || "";
+
+    customsQtyUnitInput.value =
+      row.dataset.unit || "GT";
+
+    customsWeightKgInput.value =
+      formatInputNumber(row.dataset.weightKg);
+
+    customsWeightMtInput.value =
+      formatMt(row.dataset.weightMt);
+
+    warehouseNameInput.value =
+      row.dataset.warehouse ||
+      "동방북항보세창고";
+
+    remarkInput.value =
+      row.dataset.remark || "";
+
+    /*
+     * 수정 저장 주소로 원상복구
+     */
+    customsInputForm.action =
+      "/customs/save";
+
+    customsModal.classList.add("show");
+
+    setTimeout(function () {
+      declarationDateInput.focus();
+      declarationDateInput.select();
+    }, 50);
+  }
+
 
   /*
-   * 외부 JS에서는 Jinja를 사용하지 않고
-   * HTML input의 기본값을 이용한다.
+   * 신규 등록 모달
    */
-  cargoNoInput.value = cargoNo;
-  declarationDateInput.value = today;
+  function openNewCustomsModal() {
 
-  declarationNoInput.value = "";
-  customsQtyInput.value = "";
-  customsQtyUnitInput.value = "GT";
-  customsWeightKgInput.value = "";
-  customsWeightMtInput.value = "0.000";
-  warehouseNameInput.value = "동방북항보세창고";
-  remarkInput.value = "";
+    const cargoNo =
+      cargoNoInput.defaultValue ||
+      cargoNoInput.value;
 
-  customsModal.classList.add("show");
+    const today =
+      declarationDateInput.defaultValue ||
+      declarationDateInput.value;
 
-  setTimeout(function () {
-    declarationDateInput.focus();
-    declarationDateInput.select();
-  }, 50);
-}
+    customsInputForm.reset();
 
+    modalTitle.textContent =
+      "수입신고 등록";
 
-/*
- * 모달 닫기
- */
-function closeCustomsModal() {
-  if (!customsModal) return;
+    saveButton.textContent =
+      "저장";
 
-  customsModal.classList.remove("show");
-}
+    deleteButton.hidden =
+      true;
 
+    customsIdInput.value = "";
 
-/*
- * 중량 입력값
- */
-function formatInputNumber(value) {
-  if (value === undefined || value === null || value === "") {
-    return "";
+    cargoNoInput.value =
+      cargoNo;
+
+    declarationDateInput.value =
+      today;
+
+    declarationNoInput.value = "";
+    customsQtyInput.value = "";
+    customsQtyUnitInput.value = "GT";
+    customsWeightKgInput.value = "";
+    customsWeightMtInput.value = "0.000";
+
+    warehouseNameInput.value =
+      "동방북항보세창고";
+
+    remarkInput.value = "";
+
+    customsInputForm.action =
+      "/customs/save";
+
+    customsModal.classList.add("show");
+
+    setTimeout(function () {
+      declarationDateInput.focus();
+      declarationDateInput.select();
+    }, 50);
   }
 
-  const number = Number(value);
 
-  if (!Number.isFinite(number)) {
-    return "";
+  /*
+   * 모달 닫기
+   */
+  function closeCustomsModal() {
+    customsModal.classList.remove("show");
   }
 
-  return number.toFixed(3);
-}
 
+  /*
+   * 선택 자료 삭제
+   */
+  function deleteCustoms() {
 
-/*
- * 톤수 소수점 3자리
- */
-function formatMt(value) {
-  const number = Number(value || 0);
+    const customsId =
+      customsIdInput.value;
 
-  if (!Number.isFinite(number)) {
-    return "0.000";
+    if (!customsId) {
+      alert("삭제할 수입신고 자료가 없습니다.");
+      return;
+    }
+
+    const declarationNo =
+      declarationNoInput.value || "";
+
+    const confirmed =
+      confirm(
+        `수입신고번호 ${declarationNo} 자료를 삭제하시겠습니까?`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    customsInputForm.action =
+      "/customs/delete";
+
+    /*
+     * required 검사 없이 삭제 요청
+     */
+    customsInputForm.submit();
   }
 
-  return number.toFixed(3);
-}
+
+  /*
+   * kg 입력값 표시
+   */
+  function formatInputNumber(value) {
+
+    if (
+      value === undefined ||
+      value === null ||
+      value === ""
+    ) {
+      return "";
+    }
+
+    const number =
+      Number(value);
+
+    if (!Number.isFinite(number)) {
+      return "";
+    }
+
+    return number.toFixed(3);
+  }
 
 
-/*
- * kg 입력 시 M/T 자동 계산
- */
-if (customsWeightKgInput && customsWeightMtInput) {
+  /*
+   * 톤수 표시
+   */
+  function formatMt(value) {
+
+    const number =
+      Number(value || 0);
+
+    if (!Number.isFinite(number)) {
+      return "0.000";
+    }
+
+    return number.toFixed(3);
+  }
+
+
+  /*
+   * HTML onclick에서 사용
+   */
+  window.openCustomsModal =
+    openCustomsModal;
+
+  window.openNewCustomsModal =
+    openNewCustomsModal;
+
+  window.closeCustomsModal =
+    closeCustomsModal;
+
+  window.deleteCustoms =
+    deleteCustoms;
+
+
+  /*
+   * 저장내역 행 클릭
+   */
+  document.addEventListener(
+    "click",
+    function (event) {
+
+      const row =
+        event.target.closest(".history-row");
+
+      if (!row) return;
+
+      openCustomsModal(row);
+    }
+  );
+
+
+  /*
+   * kg 입력 시 M/T 자동 계산
+   */
   customsWeightKgInput.addEventListener(
     "input",
     function () {
+
       const weightKg =
         Number(this.value || 0);
 
@@ -205,36 +308,36 @@ if (customsWeightKgInput && customsWeightMtInput) {
         weightMt.toFixed(3);
     }
   );
-}
 
 
-/*
- * 모달 바깥 영역 클릭 시 닫기
- */
-if (customsModal) {
+  /*
+   * 모달 바깥 클릭 시 닫기
+   */
   customsModal.addEventListener(
     "click",
     function (event) {
+
       if (event.target === customsModal) {
         closeCustomsModal();
       }
     }
   );
-}
 
 
-/*
- * ESC 키로 모달 닫기
- */
-document.addEventListener(
-  "keydown",
-  function (event) {
-    if (
-      customsModal &&
-      event.key === "Escape" &&
-      customsModal.classList.contains("show")
-    ) {
-      closeCustomsModal();
+  /*
+   * ESC 키로 닫기
+   */
+  document.addEventListener(
+    "keydown",
+    function (event) {
+
+      if (
+        event.key === "Escape" &&
+        customsModal.classList.contains("show")
+      ) {
+        closeCustomsModal();
+      }
     }
-  }
-);
+  );
+
+});
